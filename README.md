@@ -31,7 +31,7 @@
 
 1. Open a terminal.
 
-1. Make a `.yaml` config file like this in the current directory.
+1. Make a YAML config file like this in the current directory.
 
    ```yaml
    benchmark: "on one's plate"
