@@ -16,7 +16,7 @@
 
 1. Open a terminal.
 
-1. Copy an API key from the Google AI Studio website.
+1. Copy an API key from [Google AI Studio](https://aistudio.google.com/api-keys).
 
 1. Run these commands:
    ```bash
