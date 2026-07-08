@@ -32,16 +32,6 @@ No. Evaluating every English word in Wiktionary would cost too much.
 
 The target is to keep monthly usage under $100. I set this limit because most productivity tools cost less than that.
 
-## Storage
-
-> What is the storage location for the API key?
-
-The API key is stored at `~/.config/sense/key`.
-
-- `~/.config` is the standard config directory on Unix.
-
-- `~/.config` is easier to access from the command line than the `Application Support` directory.
-
 ## Prompting
 
 > Does `sense` use a system prompt?
