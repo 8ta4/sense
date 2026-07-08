@@ -85,3 +85,17 @@ No.
 Running the same phrase a couple of times and averaging the results could potentially help smooth out any random noise.
 
 But `sense` skips that. Making multiple requests per phrase incurs more API calls.
+
+## Output
+
+> How many columns does a TSV output file have?
+
+A TSV output file has two columns.
+
+The first column has the target phrase, and the second one has the normalized score. The entries are ordered by descending score.
+
+> Is a JSON output file a JSON array?
+
+No.
+
+A JSON output file is a JSON object. The keys hold the target phrases, while the values hold the maps the API returns.
