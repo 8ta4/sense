@@ -6,6 +6,25 @@
 
 `sense` rates phrases for double meanings.
 
+## Setup
+
+> How do I set up `sense`?
+
+1. Make sure you're using a Mac with Apple silicon.
+
+1. Install [Homebrew](https://brew.sh/#install).
+
+1. Open a terminal.
+
+1. Copy an API key from the Google AI Studio website.
+
+1. Run these commands:
+   ```bash
+   brew install 8ta4/sense/sense
+   mkdir -p ~/.config/sense/
+   pbpaste > ~/.config/sense/key
+   ```
+
 ## Usage
 
 > How do I run `sense`?
