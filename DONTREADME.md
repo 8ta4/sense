@@ -106,23 +106,6 @@ Using structured outputs makes sure the API response includes the scoring fields
 
 Each request includes two phrases: the benchmark phrase plus another one.
 
-> Does `sense` submit the whole list of phrases in one batch?
-
-No.
-
-Submitting the whole list of phrases in one batch would exceed the enqueued token limit of Gemini's Tier 1 Batch API.
-
-Instead, `sense` splits the list into two batches.
-
-Tier 2 boosts the token limit a lot. But Tier 2 requires [a $100 payment and a three‑day waiting period after your first payment](https://ai.google.dev/gemini-api/docs/rate-limits#:~:text=Paid%20%24100%20%2B%203%20days%20from%20first%20successful%20payment). `sense` is designed to work on Tier 1, so you can use the tool immediately without paying a steep upfront cost.
-
-> Does `sense` send multiple batches simultaneously?
-
-No.
-
-`sense` processes batches sequentially. That way, I dodge the headache of tracking a bunch of active batch names.
-
-
 > Are the association scores normalized across multiple requests?
 
 Yes.
@@ -171,6 +154,12 @@ A TSV output file has two columns.
 
 The first column has the target phrase, and the second one has the normalized score. The entries are ordered by descending score.
 
+> Will `sense` overwrite an existing TSV output file?
+
+No.
+
+If the output TSV file is found in your current directory, the tool shuts down so you don't duplicate work.
+
 > Is a JSON output file a JSON array?
 
 No.
@@ -184,6 +173,44 @@ No.
 - You'll probably want to search both single words and multi-word phrases at once.
 
 - If you ever need to split single words from multi-word phrases, it's easy to filter the data in a spreadsheet by checking for spaces in the entries.
+
+## Batching
+
+> Does `sense` submit the whole list of phrases in one batch?
+
+No.
+
+Submitting the whole list of phrases in one batch would exceed the enqueued token limit of Gemini's Tier 1 Batch API.
+
+Instead, `sense` splits the list into two batches.
+
+Tier 2 boosts the token limit a lot. But Tier 2 requires [a $100 payment and a three‑day waiting period after your first payment](https://ai.google.dev/gemini-api/docs/rate-limits#:~:text=Paid%20%24100%20%2B%203%20days%20from%20first%20successful%20payment). `sense` is designed to work on Tier 1, so you can use the tool immediately without paying a steep upfront cost.
+
+> Does `sense` send multiple batches simultaneously?
+
+No.
+
+`sense` processes batches sequentially. That way, I dodge the headache of tracking a bunch of active batch names.
+
+
+> Does `sense` wait for a batch to finish?
+
+Yes.
+
+`sense` stays running in the terminal to monitor the active batch. When the batch finishes, `sense` downloads the results, merges them, and submits the next batch if there's another one.
+
+> What's the polling interval?
+
+The polling interval is set to 10 seconds.
+
+Polling every second might overload the API.
+
+
+> Does running multiple instances of `sense` cause duplicate batch requests?
+
+No.
+
+`sense` grabs a lock on the state directory. The second instance run will fail to acquire the lock.
 
 ## Resumability
 
@@ -199,22 +226,8 @@ No.
 
 When it's gathering data, `sense` puts the growing JSON file into `~/.local/state/sense/`. `sense` only drops completed files into the current working directory when the JSON file is complete.
 
-## Safety
-
-> Will `sense` overwrite an existing TSV output file?
-
-No.
-
-If the output TSV file is found in your current directory, the tool shuts down so you don't duplicate work.
-
 > Does a crash during a write operation corrupt the accumulated results?
 
 No.
 
 The tool swaps in a new JSON file atomically.
-
-> Does running multiple instances of `sense` cause duplicate batch requests?
-
-No.
-
-`sense` grabs a lock on the state directory. The second instance run will fail to acquire the lock.
