@@ -106,6 +106,23 @@ Using structured outputs makes sure the API response includes the scoring fields
 
 Each request includes two phrases: the benchmark phrase plus another one.
 
+> Does `sense` submit the whole list of phrases in one batch?
+
+No.
+
+Submitting the whole list of phrases in one batch would exceed the enqueued token limit of Gemini's Tier 1 Batch API.
+
+Instead, `sense` splits the list into two batches.
+
+Tier 2 boosts the token limit a lot. But Tier 2 requires a $100 payment and a three‑day waiting period after your first payment. `sense` is designed to work on Tier 1, so you can use the tool immediately without paying a steep upfront cost.
+
+> Does `sense` send multiple batches simultaneously?
+
+No.
+
+`sense` processes batches sequentially. That way, I dodge the headache of tracking a bunch of active batch IDs.
+
+
 > Are the association scores normalized across multiple requests?
 
 Yes.
