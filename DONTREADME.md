@@ -92,7 +92,7 @@ Allowing thinking has these downsides:
 
 - You could be charged for thinking tokens.
 
-- Setting `temperature` to 0 might mess up the model's thinking, since Gemini 3.x's reasoning capabilities are optimized for the default settings.
+- Setting `temperature` to 0 might mess up the model's thinking, since [Gemini 3.x's reasoning capabilities are optimized for the default settings](https://ai.google.dev/gemini-api/docs/whats-new-gemini-3.5#parameter-updates:~:text=The%20following%20apply,the%20default%20settings.).
 
 > Does `sense` use structured outputs?
 
