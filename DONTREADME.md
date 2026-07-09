@@ -72,6 +72,8 @@ The target is to keep monthly usage under $100. I set this limit because most pr
 
 - `gemini-3.5-flash` [supports structured outputs](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash#:~:text=Supported-,Structured%20outputs,-Supported).
 
+- `gemini-3.5-flash` [supports the Batch API](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash#:~:text=Consumption%20options-,Batch%20API,-Supported).
+
 > Does `sense` use a system prompt?
 
 Yep.
