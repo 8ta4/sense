@@ -44,9 +44,9 @@ Yes.
 
 Both can act as pivots:
 
-- "Obese children put a lot of strain on the NHS, not to mention seesaws and swings."
+- "[Obese children put a lot of strain on the NHS, not to mention seesaws and swings.](https://youtu.be/6wplEAkNXow?t=1671)"
 
-- "She recently went to her GP just for the annual checkup. She was classified by her own GP as being morbidly obese. Who came up with that term? That's so unnecessarily harsh, morbidly obese as if she doesn't have enough on her plate."
+- "[She recently went to her GP just for the annual checkup. She was classified by her own GP as being morbidly obese. Who came up with that term? That's so unnecessarily harsh, morbidly obese as if she doesn't have enough on her plate.](https://youtu.be/Tehlt1P-NM0?t=2907)"
 
 ### Budget
 
