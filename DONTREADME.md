@@ -234,7 +234,7 @@ Polling every second might overload the API.
 
 No.
 
-`sense` grabs a lock on the state directory. The second instance run will fail to acquire the lock.
+`sense` grabs a lock. The second instance run will fail to acquire the lock.
 
 ## Resumability
 
