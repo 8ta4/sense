@@ -80,6 +80,12 @@ Yep.
 
 If the list of phrases contains words that sound like commands, the model could treat them as instructions rather than just stuff to score. So the system prompt makes it crystal clear what's data and what's instruction.
 
+> Does `sense` use a fixed `seed` for requests?
+
+Yes.
+
+`sense` sets the `seed` to `0`.
+
 > What's the temperature `sense` uses for rating associations?
 
 `sense` runs at a temperature of 0 for rating associations. The whole point is to get the model to tap into its knowledge and spit out its best estimate.
