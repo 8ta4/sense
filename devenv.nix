@@ -36,6 +36,7 @@
     brew bundle
     export PATH="$HOME/.ghcup/bin:$PATH"
     ghcup install stack 3.11.1
+    ghcup install hls 2.14.0.0
   '';
 
   # https://devenv.sh/tasks/
