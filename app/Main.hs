@@ -9,7 +9,7 @@ data Config = Config
   { benchmark :: Text,
     theme :: Text
   }
-  deriving (Generic)
+  deriving (Generic, Show)
 
 instance FromJSON Config
 
@@ -18,6 +18,10 @@ main = do
   file <- execParser $ info (strArgument mempty <**> helper) mempty
   result <- decodeFileEither file
   case result of
-    Left _ -> pure ()
-    Right (_ :: Config) -> pure ()
+    Left exception -> do
+      putTextLn "YAML file could not be parsed"
+      print exception
+    Right (config :: Config) -> do
+      putTextLn "YAML file parsed successfully"
+      print config
   pure ()
