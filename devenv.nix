@@ -1,8 +1,5 @@
 {
   pkgs,
-  lib,
-  config,
-  inputs,
   ...
 }:
 
@@ -62,6 +59,7 @@
     # https://github.com/NixOS/nixfmt/blob/7cad8663932db4519d4c5b623becdcda655cef7c/README.md?plain=1#L165
     nixfmt.enable = true;
     prettier.enable = true;
+    trim-trailing-whitespace.enable = true;
   };
 
   # See full reference at https://devenv.sh/reference/options/
