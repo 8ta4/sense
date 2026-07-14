@@ -34,6 +34,7 @@
     -c 'stack ghci --ghci-options "-ghci-script ghcid.ghci" --no-load' \
     --no-height-limit \
     -r \
+    -s ":set args $@" \
     -s ':set -Wprepositive-qualified-module' \
     -W
   '';
