@@ -1,4 +1,7 @@
-{ pkgs, lib, config, inputs, ... }:
+{
+  pkgs,
+  ...
+}:
 
 {
   # https://devenv.sh/basics/
@@ -7,6 +10,7 @@
   # https://devenv.sh/packages/
   packages = [
     pkgs.git
+    pkgs.gitleaks
     pkgs.pre-commit
   ];
 
@@ -45,7 +49,17 @@
   # https://devenv.sh/git-hooks/
   # git-hooks.hooks.shellcheck.enable = true;
   git-hooks.hooks = {
+    end-of-file-fixer.enable = true;
+    gitleaks = {
+      enable = true;
+      # https://github.com/gitleaks/gitleaks/blob/4c232b5014f7618360bd992b4c489cb055881c6b/.pre-commit-hooks.yaml#L4
+      # Direct execution of gitleaks here results in '[git] fatal: cannot change to 'devenv.nix': Not a directory'.
+      entry = "bash -c 'exec gitleaks git --redact --staged --verbose'";
+    };
+    # https://github.com/NixOS/nixfmt/blob/7cad8663932db4519d4c5b623becdcda655cef7c/README.md?plain=1#L165
+    nixfmt.enable = true;
     prettier.enable = true;
+    trim-trailing-whitespace.enable = true;
   };
 
   # See full reference at https://devenv.sh/reference/options/
