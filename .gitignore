@@ -9,6 +9,9 @@ devenv.local.yaml
 # pre-commit
 .pre-commit-config.yaml
 
+# sense
+wiktionary.tsv
+
 # Stack
 .stack-work/
 *~

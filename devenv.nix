@@ -26,6 +26,9 @@
   # services.postgres.enable = true;
 
   # https://devenv.sh/scripts/
+  scripts.download.exec = ''
+    wget https://raw.githubusercontent.com/8ta4/prevalence-data/c79fd1ee936a5b05ad4fecc99b5232d2b9f14b4d/wiktionary.tsv
+  '';
   scripts.hello.exec = ''
     echo hello from $GREET
   '';
