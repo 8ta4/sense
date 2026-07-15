@@ -35,7 +35,7 @@ data Config = Config
 instance FromJSON Config
 
 isCandidate :: Row -> Bool
-isCandidate row = row.prevalence >= 0.5 && row.lemma
+isCandidate row = row.prevalence >= 50 && row.lemma
 
 main :: IO ()
 main = do
