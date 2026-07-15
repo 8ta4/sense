@@ -4,7 +4,7 @@ import Data.Yaml (FromJSON, decodeFileEither)
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Relude
-import System.Directory (getHomeDirectory)
+import System.Directory (createDirectoryIfMissing, getHomeDirectory)
 import System.FilePath ((</>))
 
 data Config = Config
@@ -19,6 +19,7 @@ main :: IO ()
 main = do
   home <- getHomeDirectory
   key <- readFileBS $ home </> ".config/sense/key"
+  createDirectoryIfMissing True $ home </> ".local/state/sense/"
   file <- execParser $ info (strArgument mempty <**> helper) mempty
   result <- decodeFileEither file
   case result of
