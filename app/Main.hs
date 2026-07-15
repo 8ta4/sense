@@ -75,7 +75,10 @@ main = do
                                                          [ "contents"
                                                              .= [ object
                                                                     []
-                                                                ]
+                                                                ],
+                                                           "generationConfig"
+                                                             .= object
+                                                               ["maxOutputTokens" .= (100 :: Int)]
                                                          ]
                                                    ]
                                                ]
