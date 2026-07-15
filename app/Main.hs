@@ -3,7 +3,8 @@ module Main (main) where
 import Data.Csv (DecodeOptions (decDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, parseNamedRecord, (.:))
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
-import Data.Yaml (FromJSON, decodeFileEither)
+import Data.Yaml (FromJSON, Value, decodeFileEither, object)
+import Network.HTTP.Req (POST (POST), ReqBodyJson (ReqBodyJson), defaultHttpConfig, header, https, jsonResponse, req, responseBody, runReq, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Relude
@@ -58,3 +59,12 @@ main = do
     Right (config :: Config) -> do
       putTextLn "YAML file parsed successfully"
       print config
+      runReq defaultHttpConfig $ do
+        r <-
+          req
+            POST
+            (https "generativelanguage.googleapis.com" /: "v1beta" /: "models" /: "gemini-3.5-flash:batchGenerateContent")
+            (ReqBodyJson $ object [])
+            jsonResponse
+            $ header "x-goog-api-key" key
+        liftIO $ print (responseBody r :: Value)
