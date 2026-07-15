@@ -26,6 +26,7 @@ dependencies:
   - filepath
   - optparse-applicative
   - relude
+  - req
   - vector
   - yaml
 

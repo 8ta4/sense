@@ -71,6 +71,7 @@ library
     , filepath
     , optparse-applicative
     , relude
+    , req
     , vector
     , yaml
   default-language: Haskell2010
@@ -122,6 +123,7 @@ executable sense-exe
     , filepath
     , optparse-applicative
     , relude
+    , req
     , sense
     , vector
     , yaml
@@ -175,6 +177,7 @@ test-suite sense-test
     , filepath
     , optparse-applicative
     , relude
+    , req
     , sense
     , vector
     , yaml
