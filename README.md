@@ -27,7 +27,7 @@
    git clone https://github.com/8ta4/sense
    cd sense
    devenv allow
-   download
+   devenv shell download
    ```
 
 ## Usage
