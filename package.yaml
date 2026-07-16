@@ -24,6 +24,8 @@ dependencies:
   - cassava
   - directory
   - filepath
+  - lens
+  - lens-aeson
   - optparse-applicative
   - relude
   - req

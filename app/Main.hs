@@ -1,5 +1,7 @@
 module Main (main) where
 
+import Control.Lens.Fold ((^?))
+import Data.Aeson.Lens (key, _String)
 import Data.Csv (DecodeOptions (decDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, parseNamedRecord, (.:))
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
@@ -38,7 +40,7 @@ instance FromJSON Config
 main :: IO ()
 main = do
   home <- getHomeDirectory
-  key <- readFileBS $ home </> ".config/sense/key"
+  apiKey <- readFileBS $ home </> ".config/sense/key"
   systemPrompt <- readFileBS "system.txt"
   createDirectoryIfMissing True $ home </> ".local/state/sense/"
   content <- readFileLBS "wiktionary.tsv"
@@ -88,8 +90,8 @@ main = do
                       ]
                 )
                 jsonResponse
-                $ header "x-goog-api-key" key
-            liftIO $ print (responseBody response :: Value)
+                $ header "x-goog-api-key" apiKey
+            liftIO $ print ((responseBody response :: Value) ^? key "name" . _String)
 
 isCandidate :: Row -> Bool
 isCandidate row = row.prevalence >= 50 && row.lemma

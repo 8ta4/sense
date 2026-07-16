@@ -69,6 +69,8 @@ library
     , cassava
     , directory
     , filepath
+    , lens
+    , lens-aeson
     , optparse-applicative
     , relude
     , req
@@ -121,6 +123,8 @@ executable sense-exe
     , cassava
     , directory
     , filepath
+    , lens
+    , lens-aeson
     , optparse-applicative
     , relude
     , req
@@ -175,6 +179,8 @@ test-suite sense-test
     , cassava
     , directory
     , filepath
+    , lens
+    , lens-aeson
     , optparse-applicative
     , relude
     , req
