@@ -56,7 +56,7 @@ main = do
           putTextLn "YAML file parsed successfully"
           print config
           runReq defaultHttpConfig $ do
-            r <-
+            response <-
               req
                 POST
                 url
@@ -89,7 +89,7 @@ main = do
                 )
                 jsonResponse
                 $ header "x-goog-api-key" key
-            liftIO $ print (responseBody r :: Value)
+            liftIO $ print (responseBody response :: Value)
 
 isCandidate :: Row -> Bool
 isCandidate row = row.prevalence >= 50 && row.lemma
