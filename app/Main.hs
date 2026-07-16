@@ -3,6 +3,7 @@ module Main (main) where
 import Control.Lens.Fold ((^?))
 import Data.Aeson.Lens (key, _String)
 import Data.Csv (DecodeOptions (decDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, parseNamedRecord, (.:))
+import Data.Text (splitOn)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Data.Yaml (FromJSON, Value, decodeFileEither, object, (.=))
@@ -10,6 +11,7 @@ import Network.HTTP.Req (POST (POST), ReqBodyJson (ReqBodyJson), Scheme (Https),
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Relude
+import Relude.Unsafe ((!!))
 import System.Directory (createDirectoryIfMissing, getHomeDirectory)
 import System.FilePath ((</>))
 
@@ -93,7 +95,7 @@ main = do
                 $ header "x-goog-api-key" apiKey
             liftIO $ print ((responseBody response :: Value) ^? key "name" . _String)
             case (responseBody response :: Value) ^? key "name" . _String of
-              Just name -> writeFileText (statePath </> "id") name
+              Just name -> writeFileText (statePath </> "id") $ (splitOn "/" name) !! 1
               Nothing -> pure ()
     Left _ -> pure ()
 
