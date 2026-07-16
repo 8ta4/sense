@@ -94,5 +94,5 @@ main = do
 isCandidate :: Row -> Bool
 isCandidate row = row.prevalence >= 50 && row.lemma
 
-url :: Url Https
+url :: Url 'Https
 url = https "generativelanguage.googleapis.com" /: "v1beta" /: "models" /: "gemini-3.5-flash:batchGenerateContent"
