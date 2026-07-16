@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Control.Concurrent (threadDelay)
 import Control.Lens.Fold ((^?))
 import Data.Aeson.Lens (key, _String)
 import Data.Csv (DecodeOptions (decDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, parseNamedRecord, (.:))
@@ -44,7 +45,9 @@ poll request = runReq defaultHttpConfig $ do
   response <- request
   case (responseBody response) ^? key "metadata" . key "state" . _String of
     Just "BATCH_STATE_SUCCEEDED" -> pure ()
-    Just "BATCH_STATE_RUNNING" -> pure ()
+    Just "BATCH_STATE_RUNNING" -> liftIO $ do
+      threadDelay 10000000
+      poll request
     Just _ -> pure ()
     Nothing -> pure ()
 
