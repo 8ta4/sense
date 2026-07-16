@@ -44,7 +44,7 @@ main = do
   home <- getHomeDirectory
   apiKey <- readFileBS $ home </> ".config/sense/key"
   systemPrompt <- readFileBS "system.txt"
-  let statePath = home </> ".local/state/sense/"
+  let statePath = home </> ".local/state/sense"
   createDirectoryIfMissing True statePath
   content <- readFileLBS "wiktionary.tsv"
   file <- execParser $ info (strArgument mempty <**> helper) mempty
@@ -93,7 +93,6 @@ main = do
                 )
                 jsonResponse
                 $ header "x-goog-api-key" apiKey
-            liftIO $ print ((responseBody response :: Value) ^? key "name" . _String)
             case (responseBody response :: Value) ^? key "name" . _String of
               Just name -> writeFileText (statePath </> "id") $ (splitOn "/" name) !! 1
               Nothing -> pure ()
