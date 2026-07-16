@@ -102,7 +102,11 @@ main = do
                                                                       ],
                                                                  "generationConfig"
                                                                    .= object
-                                                                     ["maxOutputTokens" .= (100 :: Int)]
+                                                                     [ "maxOutputTokens" .= (100 :: Int),
+                                                                       "thinkingConfig"
+                                                                         .= object
+                                                                           ["thinkingLevel" .= ("MINIMAL" :: Text)]
+                                                                     ]
                                                                ]
                                                          ]
                                                      ]
