@@ -13,7 +13,7 @@ import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Relude
 import Relude.Unsafe ((!!))
-import System.Directory (createDirectoryIfMissing, getHomeDirectory)
+import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirectory)
 import System.FilePath ((</>))
 
 data Row = Row
@@ -43,15 +43,17 @@ instance FromJSON Config
 main :: IO ()
 main = do
   home <- getHomeDirectory
-  apiKey <- readFileBS $ home </> ".config/sense/key"
-  systemPrompt <- readFileBS "system.txt"
   let statePath = home </> ".local/state/sense"
   createDirectoryIfMissing True statePath
-  content <- readFileLBS "wiktionary.tsv"
   let batchIdPath = statePath </> "id"
-  batchId <- readFileBS batchIdPath
+  apiKey <- readFileBS $ home </> ".config/sense/key"
   let apiKeyHeader = header "x-goog-api-key" apiKey
-  poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
+  exists <- doesFileExist batchIdPath
+  when exists $ do
+    batchId <- readFileBS batchIdPath
+    poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
+  content <- readFileLBS "wiktionary.tsv"
+  systemPrompt <- readFileBS "system.txt"
   case decodeByNameWith (defaultDecodeOptions {decDelimiter = 9}) content of
     Right (_, rows :: Vector Row) -> do
       let candidates = Vector.filter isCandidate rows
