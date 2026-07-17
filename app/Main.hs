@@ -52,7 +52,6 @@ main = do
     batchId <- readFileBS batchIdPath
     poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
   content <- readFileLBS "wiktionary.tsv"
-  systemPrompt <- readFileBS "system.txt"
   case decodeByNameWith (defaultDecodeOptions {decDelimiter = 9}) content of
     Right (_, rows :: Vector Row) -> do
       let candidates = Vector.filter isCandidate rows
@@ -119,8 +118,14 @@ makePayload input =
             "thinkingConfig"
               .= object
                 ["thinkingLevel" .= ("MINIMAL" :: Text)]
-          ]
+          ],
+      "systemInstruction"
+        .= object
+          ["parts" .= [object ["text" .= systemPrompt]]]
     ]
+
+systemPrompt :: Text
+systemPrompt = "Estimate the percentage of Americans 10 years or older who know each phrase's meaning that fits the theme."
 
 poll :: Req (JsonResponse Value) -> IO ()
 poll request = runReq defaultHttpConfig $ do
