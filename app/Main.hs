@@ -110,7 +110,11 @@ makePayload config input =
   object
     [ "contents"
         .= [ object
-               ["parts" .= [object ["text" .= input]]]
+               [ "parts"
+                   .= [ object
+                          ["text" .= input]
+                      ]
+               ]
            ],
       "generationConfig"
         .= object
@@ -122,7 +126,11 @@ makePayload config input =
           ],
       "systemInstruction"
         .= object
-          ["parts" .= [object ["text" .= systemPrompt]]]
+          [ "parts"
+              .= [ object
+                     ["text" .= systemPrompt]
+                 ]
+          ]
     ]
 
 systemPrompt :: Text
