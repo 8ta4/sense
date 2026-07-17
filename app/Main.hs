@@ -81,7 +81,7 @@ main = do
                                             .= ( ( \candidate ->
                                                      [ object
                                                          [ "request"
-                                                             .= makePayload candidate.entry
+                                                             .= makePayload config candidate.entry
                                                          ]
                                                      ]
                                                  )
@@ -105,8 +105,8 @@ loadApiKeyHeader = do
   apiKey <- readFileBS $ home </> ".config/sense/key"
   pure $ header "x-goog-api-key" apiKey
 
-makePayload :: Text -> Value
-makePayload input =
+makePayload :: Config -> Text -> Value
+makePayload config input =
   object
     [ "contents"
         .= [ object
@@ -115,6 +115,7 @@ makePayload input =
       "generationConfig"
         .= object
           [ "maxOutputTokens" .= (100 :: Int),
+            "responseMimeType" .= ("application/json" :: Text),
             "thinkingConfig"
               .= object
                 ["thinkingLevel" .= ("MINIMAL" :: Text)]
