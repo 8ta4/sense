@@ -23,62 +23,7 @@ source-repository head
   type: git
   location: https://github.com/githubuser/sense
 
-library
-  exposed-modules:
-      Lib
-  other-modules:
-      Paths_sense
-  autogen-modules:
-      Paths_sense
-  hs-source-dirs:
-      src
-  default-extensions:
-      BangPatterns
-      ConstraintKinds
-      DataKinds
-      DefaultSignatures
-      DeriveFunctor
-      DeriveFoldable
-      DeriveTraversable
-      DeriveGeneric
-      DerivingStrategies
-      DerivingVia
-      EmptyDataDecls
-      FlexibleContexts
-      FlexibleInstances
-      GeneralizedNewtypeDeriving
-      ImportQualifiedPost
-      KindSignatures
-      LambdaCase
-      MultiParamTypeClasses
-      NamedFieldPuns
-      NoImplicitPrelude
-      PatternGuards
-      PatternSynonyms
-      RankNTypes
-      RecordWildCards
-      OverloadedRecordDot
-      OverloadedStrings
-      ScopedTypeVariables
-      TupleSections
-      TypeFamilies
-      ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations
-  build-depends:
-      base >=4.7 && <5
-    , cassava
-    , directory
-    , filepath
-    , lens
-    , lens-aeson
-    , optparse-applicative
-    , relude
-    , req
-    , vector
-    , yaml
-  default-language: Haskell2010
-
-executable sense-exe
+executable sense
   main-is: Main.hs
   other-modules:
       Paths_sense
@@ -117,7 +62,7 @@ executable sense-exe
       TupleSections
       TypeFamilies
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -main-is Main
   build-depends:
       base >=4.7 && <5
     , cassava
@@ -128,19 +73,20 @@ executable sense-exe
     , optparse-applicative
     , relude
     , req
-    , sense
     , vector
     , yaml
   default-language: Haskell2010
 
-test-suite sense-test
+test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Main
       Paths_sense
   autogen-modules:
       Paths_sense
   hs-source-dirs:
+      app
       test
   default-extensions:
       BangPatterns
@@ -173,7 +119,7 @@ test-suite sense-test
       TupleSections
       TypeFamilies
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -main-is Spec
   build-depends:
       base >=4.7 && <5
     , cassava
@@ -184,7 +130,6 @@ test-suite sense-test
     , optparse-applicative
     , relude
     , req
-    , sense
     , vector
     , yaml
   default-language: Haskell2010

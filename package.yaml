@@ -33,6 +33,10 @@ dependencies:
   - yaml
 
 ghc-options:
+  # https://github.com/commercialhaskell/stack-templates/blob/360442dbdc3d114df5fe377306978d4f47694370/new-template.hsfiles#L45-L47
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
   # https://github.com/purescript/purescript/blob/cb3c4965c8468d26c9b14cf0319db6dbd06ee4ff/purescript.cabal#L57-L89
   # This list taken from https://medium.com/mercury-bank/enable-all-the-warnings-a0517bc081c3
   # Enable all warnings with -Weverything, then disable the ones we don’t care about
@@ -101,27 +105,15 @@ default-extensions:
   - TypeFamilies
   - ViewPatterns
 
-library:
-  source-dirs: src
+source-dirs: app
 
+# We avoid defining a separate library component to work around a Haskell Language Server (HLS) issue with cross-component dependencies.
+# HLS does not reflect changes made in the library component within the executable component until the library is recompiled and HLS is restarted.
 executables:
-  sense-exe:
-    main: Main.hs
-    source-dirs: app
-    ghc-options:
-      - -threaded
-      - -rtsopts
-      - -with-rtsopts=-N
-    dependencies:
-      - sense
+  sense:
+    main: Main
 
 tests:
-  sense-test:
-    main: Spec.hs
+  spec:
+    main: Spec
     source-dirs: test
-    ghc-options:
-      - -threaded
-      - -rtsopts
-      - -with-rtsopts=-N
-    dependencies:
-      - sense

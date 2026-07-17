@@ -35,14 +35,22 @@
   scripts.hello.exec = ''
     echo hello from $GREET
   '';
-  scripts.watch.exec = ''
+  # ':set -Wprepositive-qualified-module' command works around a ghcid crash related to the `-Wprepositive-qualified-module` warning.
+  # The warning can be triggered by GHCi's internal startup process, causing a crash if enabled from the start.
+  # The fix is to disable the warning during initial GHCi loading in a .ghci file with `:set -Wno-prepositive-qualified-module`
+  # and then use this ghcid command to re-enable it after ghcid has successfully started.
+  # The trade-off is that the initial module load is not checked for this specific warning.
+  scripts.sense-watch.exec = ''
     ghcid -a \
-    -c 'stack ghci --ghci-options "-ghci-script ghcid.ghci" --no-load' \
+    -c 'stack ghci' \
     --no-height-limit \
     -r \
     -s ":set args fat.yaml" \
     -s ':set -Wprepositive-qualified-module' \
     -W
+  '';
+  scripts.test-watch.exec = ''
+    stack test --file-watch
   '';
 
   # https://devenv.sh/basics/
