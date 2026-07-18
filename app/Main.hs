@@ -2,6 +2,7 @@ module Main where
 
 import Control.Concurrent (threadDelay)
 import Control.Lens.Fold ((^?))
+import Data.Aeson.Key (fromText)
 import Data.Aeson.Lens (key, _String)
 import Data.Csv (DecodeOptions (decDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, parseNamedRecord, (.:))
 import Data.Text (splitOn)
@@ -110,19 +111,49 @@ makePayload config input =
   object
     [ "contents"
         .= [ object
-               ["parts" .= [object ["text" .= input]]]
+               [ "parts"
+                   .= [ object
+                          ["text" .= ("Theme:\n" <> config.theme <> "\n\nPhrases:\n" <> config.benchmark <> "\n" <> input)]
+                      ]
+               ]
            ],
       "generationConfig"
         .= object
           [ "maxOutputTokens" .= (100 :: Int),
             "responseMimeType" .= ("application/json" :: Text),
+            "responseJsonSchema"
+              .= object
+                [ "properties"
+                    .= object
+                      [ fromText config.benchmark
+                          .= percentageSchema,
+                        fromText input
+                          .= percentageSchema
+                      ],
+                  "propertyOrdering" .= [fromText config.benchmark, fromText input],
+                  "type" .= ("object" :: Text)
+                ],
+            "seed" .= (0 :: Int),
+            "temperature" .= (0 :: Int),
             "thinkingConfig"
               .= object
                 ["thinkingLevel" .= ("MINIMAL" :: Text)]
           ],
       "systemInstruction"
         .= object
-          ["parts" .= [object ["text" .= systemPrompt]]]
+          [ "parts"
+              .= [ object
+                     ["text" .= systemPrompt]
+                 ]
+          ]
+    ]
+
+percentageSchema :: Value
+percentageSchema =
+  object
+    [ "maximum" .= (100 :: Int),
+      "minimum" .= (0 :: Int),
+      "type" .= ("number" :: Text)
     ]
 
 systemPrompt :: Text

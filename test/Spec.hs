@@ -12,5 +12,9 @@ main = do
   case result of
     Left _ -> pure ()
     Right (config :: Config) -> runReq defaultHttpConfig $ do
-      response <- req POST (baseUrl /: "models" /: "gemini-3.5-flash:generateContent") (ReqBodyJson (makePayload config "strain")) jsonResponse apiKeyHeader
-      liftIO $ print (responseBody response :: Value)
+      let payload = makePayload config "strain"
+      putTextLn "Payload:"
+      print payload
+      response <- req POST (baseUrl /: "models" /: "gemini-3.5-flash:generateContent") (ReqBodyJson payload) jsonResponse apiKeyHeader
+      putTextLn "Response:"
+      print (responseBody response :: Value)

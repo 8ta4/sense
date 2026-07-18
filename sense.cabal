@@ -64,7 +64,8 @@ executable sense
       ViewPatterns
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -main-is Main
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , cassava
     , directory
     , filepath
@@ -121,7 +122,8 @@ test-suite spec
       ViewPatterns
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -main-is Spec
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
     , cassava
     , directory
     , filepath
