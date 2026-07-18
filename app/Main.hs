@@ -122,13 +122,13 @@ makePayload config target =
                       ]
                ]
            ],
-      "generationConfig"
+      "generation_config"
         .= object
-          [ "maxOutputTokens" .= (100 :: Int),
-            "responseMimeType" .= ("application/json" :: Text),
-            "responseJsonSchema"
+          [ "max_output_tokens" .= (100 :: Int),
+            "response_mime_type" .= ("application/json" :: Text),
+            "response_json_schema"
               .= object
-                [ "additionalProperties" .= False,
+                [ "additional_properties" .= False,
                   "properties"
                     .= object
                       [ fromText config.benchmark
@@ -136,17 +136,17 @@ makePayload config target =
                         fromText target
                           .= percentageSchema
                       ],
-                  "propertyOrdering" .= [fromText config.benchmark, fromText target],
+                  "property_ordering" .= [fromText config.benchmark, fromText target],
                   "required" .= [fromText config.benchmark, fromText target],
                   "type" .= ("object" :: Text)
                 ],
             "seed" .= (0 :: Int),
             "temperature" .= (0 :: Int),
-            "thinkingConfig"
+            "thinking_config"
               .= object
-                ["thinkingLevel" .= ("MINIMAL" :: Text)]
+                ["thinking_level" .= ("MINIMAL" :: Text)]
           ],
-      "systemInstruction"
+      "system_instruction"
         .= object
           [ "parts"
               .= [ object
