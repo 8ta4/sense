@@ -4,7 +4,8 @@ import Control.Concurrent (threadDelay)
 import Control.Lens.Fold (folding, (^..), (^?))
 import Data.Aeson (decodeStrict)
 import Data.Aeson.Key (fromText)
-import Data.Aeson.KeyMap (KeyMap)
+import Data.Aeson.KeyMap (KeyMap, keys)
+import Data.Aeson.KeyMap qualified as KeyMap
 import Data.Aeson.Lens (key, values, _Object, _String)
 import Data.Csv (DecodeOptions (decDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, parseNamedRecord, (.:))
 import Data.Text (splitOn)
@@ -62,13 +63,24 @@ main = do
           print config
           let batchIdPath = statePath </> "id"
           apiKeyHeader <- loadApiKeyHeader
-          exists <- doesFileExist batchIdPath
-          results <-
-            if exists
+          batchExists <- doesFileExist batchIdPath
+          progress <-
+            if batchExists
               then do
+                let cacheFile = statePath </> "cache.json"
+                cacheExists <- doesFileExist cacheFile
+                cache <-
+                  if cacheExists
+                    then do
+                      eitherCache <- decodeFileEither cacheFile
+                      case eitherCache of
+                        Right cache' -> pure cache'
+                        Left _ -> pure KeyMap.empty
+                    else pure KeyMap.empty
                 batchId <- readFileBS batchIdPath
-                poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
-              else pure []
+                results <- poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
+                pure $ cache <> (KeyMap.fromList $ (((!! 0) <$> (filter (/= fromText config.benchmark)) <$> keys) &&& id) <$> results)
+              else pure KeyMap.empty
           let candidates =
                 Vector.filter
                   ( \row ->
