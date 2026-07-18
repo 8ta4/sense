@@ -55,7 +55,6 @@ main = do
   content <- readFileLBS "wiktionary.tsv"
   case decodeByNameWith (defaultDecodeOptions {decDelimiter = 9}) content of
     Right (_, rows :: Vector Row) -> do
-      let candidates = Vector.filter isCandidate rows
       file <- execParser $ info (strArgument mempty <**> helper) mempty
       result <- decodeFileEither file
       case result of
@@ -65,6 +64,12 @@ main = do
         Right (config :: Config) -> do
           putTextLn "YAML file parsed successfully"
           print config
+          let candidates =
+                Vector.filter
+                  ( \row ->
+                      row.prevalence >= 50 && row.lemma && config.benchmark /= row.entry
+                  )
+                  rows
           runReq defaultHttpConfig $ do
             response <-
               req
@@ -172,9 +177,6 @@ poll request = runReq defaultHttpConfig $ do
       poll request
     Just _ -> pure ()
     Nothing -> pure ()
-
-isCandidate :: Row -> Bool
-isCandidate row = row.prevalence >= 50 && row.lemma
 
 batchUrl :: Url 'Https
 batchUrl = baseUrl /: "models" /: "gemini-3.5-flash:batchGenerateContent"
