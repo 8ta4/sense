@@ -85,11 +85,10 @@ main = do
                                       .= object
                                         [ "requests"
                                             .= ( ( \target ->
-                                                     [ object
-                                                         [ "request"
-                                                             .= makePayload config target
-                                                         ]
-                                                     ]
+                                                     object
+                                                       [ "request"
+                                                           .= makePayload config target
+                                                       ]
                                                  )
                                                    <$> (.entry)
                                                    <$> Vector.take batchLimit candidates
