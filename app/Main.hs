@@ -17,7 +17,7 @@ import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Relude
 import Relude.Unsafe ((!!))
-import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirectory)
+import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirectory, removeFile)
 import System.FilePath ((</>))
 
 data Row = Row
@@ -96,7 +96,9 @@ main = do
                         )
                         eligibleRows
                 if Vector.null remainingRows
-                  then pure ()
+                  then do
+                    removeFile batchIdPath
+                    removeFile cacheFile
                   else runReq defaultHttpConfig $ do
                     response <-
                       req
