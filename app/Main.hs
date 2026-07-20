@@ -4,9 +4,9 @@ import Control.Concurrent (threadDelay)
 import Control.Lens.Fold (folding, (^..), (^?))
 import Data.Aeson (decodeStrict, encodeFile)
 import Data.Aeson.Key (fromText)
-import Data.Aeson.KeyMap (KeyMap, keys)
+import Data.Aeson.KeyMap (KeyMap, elems, keys)
 import Data.Aeson.KeyMap qualified as KeyMap
-import Data.Aeson.Lens (key, values, _Object, _String)
+import Data.Aeson.Lens (key, values, _Number, _Object, _String)
 import Data.Csv (DecodeOptions (decDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, parseNamedRecord, (.:))
 import Data.Text (splitOn)
 import Data.Vector (Vector)
@@ -141,7 +141,14 @@ main = do
             loop
           eitherOutputJson <- decodeFileEither outputJsonFile
           case eitherOutputJson of
-            Right (outputJson :: KeyMap Value) -> pure ()
+            Right (outputJson :: KeyMap Value) -> do
+              let scores =
+                    filter
+                      ( \scores' ->
+                          fromMaybe False $ and <$> ((0 <) &&& (< 100)) <$> (scores' ^? key (fromText config.benchmark) . _Number)
+                      )
+                      $ elems outputJson
+              pure ()
             Left _ -> pure ()
     Left _ -> pure ()
 
