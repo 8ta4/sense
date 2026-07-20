@@ -2,7 +2,7 @@ module Main where
 
 import Control.Concurrent (threadDelay)
 import Control.Lens.Fold (folding, (^..), (^?))
-import Data.Aeson (decodeStrict)
+import Data.Aeson (decodeStrict, encodeFile)
 import Data.Aeson.Key (fromText)
 import Data.Aeson.KeyMap (KeyMap, keys)
 import Data.Aeson.KeyMap qualified as KeyMap
@@ -17,8 +17,8 @@ import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Relude
 import Relude.Unsafe ((!!))
-import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirectory)
-import System.FilePath ((</>))
+import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirectory, removeFile, renameFile)
+import System.FilePath (takeBaseName, (</>))
 
 data Row = Row
   { entry :: !Text,
@@ -62,64 +62,80 @@ main = do
           putTextLn "YAML file parsed successfully"
           print config
           let batchIdPath = statePath </> "id"
+          let cacheFile = statePath </> "cache.json"
           apiKeyHeader <- loadApiKeyHeader
-          batchExists <- doesFileExist batchIdPath
-          progress <-
-            if batchExists
-              then do
-                let cacheFile = statePath </> "cache.json"
-                cacheExists <- doesFileExist cacheFile
-                cache <-
-                  if cacheExists
-                    then do
-                      eitherCache <- decodeFileEither cacheFile
-                      case eitherCache of
-                        Right cache' -> pure cache'
-                        Left _ -> pure KeyMap.empty
-                    else pure KeyMap.empty
-                batchId <- readFileBS batchIdPath
-                results <- poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
-                pure $ cache <> (KeyMap.fromList $ (((!! 0) <$> (filter (/= fromText config.benchmark)) <$> keys) &&& id) <$> results)
-              else pure KeyMap.empty
-          let candidates =
+          let eligibleRows =
                 Vector.filter
                   ( \row ->
                       row.prevalence >= 50 && row.lemma && config.benchmark /= row.entry
                   )
                   rows
-          runReq defaultHttpConfig $ do
-            response <-
-              req
-                POST
-                batchUrl
-                ( ReqBodyJson
-                    $ object
-                      [ "batch"
-                          .= object
-                            [ "input_config"
-                                .= object
-                                  [ "requests"
-                                      .= object
-                                        [ "requests"
-                                            .= ( ( \target ->
-                                                     object
-                                                       [ "request"
-                                                           .= makePayload config target
-                                                       ]
-                                                 )
-                                                   <$> (.entry)
-                                                   <$> Vector.take batchLimit candidates
-                                               )
-                                        ]
-                                  ]
-                            ]
-                      ]
-                )
-                jsonResponse
-                apiKeyHeader
-            case (responseBody response :: Value) ^? key "name" . _String of
-              Just name -> writeFileText batchIdPath $ (splitOn "/" name) !! 1
-              Nothing -> pure ()
+          let loop = do
+                batchExists <- doesFileExist batchIdPath
+                progress <-
+                  if batchExists
+                    then do
+                      cacheExists <- doesFileExist cacheFile
+                      cache <-
+                        if cacheExists
+                          then do
+                            eitherCache <- decodeFileEither cacheFile
+                            case eitherCache of
+                              Right cache' -> pure cache'
+                              Left _ -> pure KeyMap.empty
+                          else pure KeyMap.empty
+                      batchId <- readFileBS batchIdPath
+                      results <- poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
+                      let progress' = cache <> (KeyMap.fromList $ (((!! 0) <$> (filter (fromText config.benchmark /=)) <$> keys) &&& id) <$> results)
+                      encodeFile cacheFile progress'
+                      pure progress'
+                    else pure KeyMap.empty
+                let remainingRows =
+                      Vector.filter
+                        ( \row ->
+                            not $ KeyMap.member (fromText row.entry) progress
+                        )
+                        eligibleRows
+                if Vector.null remainingRows
+                  then do
+                    removeFile batchIdPath
+                    renameFile cacheFile $ (takeBaseName file) <> ".json"
+                  else runReq defaultHttpConfig $ do
+                    response <-
+                      req
+                        POST
+                        batchUrl
+                        ( ReqBodyJson
+                            $ object
+                              [ "batch"
+                                  .= object
+                                    [ "input_config"
+                                        .= object
+                                          [ "requests"
+                                              .= object
+                                                [ "requests"
+                                                    .= ( ( \target ->
+                                                             object
+                                                               [ "request"
+                                                                   .= makePayload config target
+                                                               ]
+                                                         )
+                                                           <$> (.entry)
+                                                           <$> Vector.take batchLimit remainingRows
+                                                       )
+                                                ]
+                                          ]
+                                    ]
+                              ]
+                        )
+                        jsonResponse
+                        apiKeyHeader
+                    case (responseBody response :: Value) ^? key "name" . _String of
+                      Just name -> do
+                        writeFileText batchIdPath $ (splitOn "/" name) !! 1
+                        liftIO loop
+                      Nothing -> pure ()
+          loop
     Left _ -> pure ()
 
 loadApiKeyHeader :: IO (Option 'Https)
@@ -204,7 +220,6 @@ poll request = runReq defaultHttpConfig $ do
           . key "text"
           . _String
           . folding (decodeStrict . encodeUtf8 :: Text -> Maybe Value)
-          . values
           . _Object
     Just "BATCH_STATE_RUNNING" -> liftIO $ do
       threadDelay 10000000
