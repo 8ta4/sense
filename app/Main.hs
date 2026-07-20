@@ -17,8 +17,8 @@ import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Relude
 import Relude.Unsafe ((!!))
-import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirectory, removeFile)
-import System.FilePath ((</>))
+import System.Directory (createDirectoryIfMissing, doesFileExist, getHomeDirectory, removeFile, renameFile)
+import System.FilePath (takeBaseName, (</>))
 
 data Row = Row
   { entry :: !Text,
@@ -99,7 +99,7 @@ main = do
                 if Vector.null remainingRows
                   then do
                     removeFile batchIdPath
-                    removeFile cacheFile
+                    renameFile cacheFile $ (takeBaseName file) <> ".json"
                   else runReq defaultHttpConfig $ do
                     response <-
                       req
