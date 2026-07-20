@@ -212,7 +212,6 @@ poll request = runReq defaultHttpConfig $ do
           . key "text"
           . _String
           . folding (decodeStrict . encodeUtf8 :: Text -> Maybe Value)
-          . values
           . _Object
     Just "BATCH_STATE_RUNNING" -> liftIO $ do
       threadDelay 10000000
