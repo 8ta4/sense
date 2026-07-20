@@ -109,7 +109,14 @@ main = do
                                                        ]
                                                  )
                                                    <$> (.entry)
-                                                   <$> Vector.take batchLimit candidates
+                                                   <$> Vector.take
+                                                     batchLimit
+                                                     ( Vector.filter
+                                                         ( \row ->
+                                                             not $ KeyMap.member (fromText row.entry) progress
+                                                         )
+                                                         candidates
+                                                     )
                                                )
                                         ]
                                   ]
