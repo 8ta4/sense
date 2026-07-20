@@ -152,7 +152,7 @@ where:
 
 - $\bar{B}$: The mean score of the benchmark phrase across all requests.
 
-It is assumed that $B \neq 0$ and $B \neq 100$. If $B$ ever hits 0 or 100, that request gets tossed.
+It's assumed that $B \neq 0$ and $B \neq 100$. If $B$ ever hits 0 or 100, that request gets tossed.
 
 This piecewise approach ensures that scores of 0% and 100% remain unchanged, while scores near the benchmark are adjusted proportionally to the benchmark phrase's difference from its mean.
 
