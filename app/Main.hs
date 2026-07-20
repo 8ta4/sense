@@ -62,9 +62,9 @@ main = do
           putTextLn "YAML file parsed successfully"
           print config
           let batchIdPath = statePath </> "id"
-          apiKeyHeader <- loadApiKeyHeader
           batchExists <- doesFileExist batchIdPath
           let cacheFile = statePath </> "cache.json"
+          apiKeyHeader <- loadApiKeyHeader
           progress <-
             if batchExists
               then do
