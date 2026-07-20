@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Concurrent (threadDelay)
+import Control.Lens (traversed)
 import Control.Lens.Fold (folding, (^..), (^?))
 import Data.Aeson (decodeStrict, encodeFile)
 import Data.Aeson.Key (fromText)
@@ -148,6 +149,7 @@ main = do
                           fromMaybe False $ and <$> ((0 <) &&& (< 100)) <$> (scores' ^? key (fromText config.benchmark) . _Number)
                       )
                       $ elems outputJson
+              let benchmarkMean = (sum $ scores ^.. traversed . key (fromText config.benchmark) . _Number) / fromIntegral (length scores)
               pure ()
             Left _ -> pure ()
     Left _ -> pure ()
