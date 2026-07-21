@@ -155,7 +155,7 @@ main = do
               -- If dividing two `Scientific` values results in a repeating decimal, it throws: "fromRational has been applied to a repeating decimal which can't be represented as a Scientific!".
               let meanBenchmarkScore = (sum $ responses ^.. traversed . ix (fromText config.benchmark) . _Double) / fromIntegral (length responses)
               writeFileLBS ((takeBaseName file) <> ".tsv")
-                $ "entry\tscore\n"
+                $ "entry\tconnection\n"
                 <> encodeWith
                   defaultEncodeOptions {encDelimiter = 9}
                   ( mapMaybe
