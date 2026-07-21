@@ -1,14 +1,15 @@
 module Main where
 
 import Control.Concurrent (threadDelay)
-import Control.Lens (traversed)
+import Control.Lens (Ixed (ix), traversed)
 import Control.Lens.Fold (folding, (^..), (^?))
 import Data.Aeson (decodeStrict, encodeFile)
 import Data.Aeson.Key (fromText)
-import Data.Aeson.KeyMap (KeyMap, elems, keys)
+import Data.Aeson.Key qualified as Key
+import Data.Aeson.KeyMap (KeyMap, delete, keys)
 import Data.Aeson.KeyMap qualified as KeyMap
-import Data.Aeson.Lens (key, values, _Number, _Object, _String)
-import Data.Csv (DecodeOptions (decDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, parseNamedRecord, (.:))
+import Data.Aeson.Lens (key, values, _Double, _Number, _Object, _String)
+import Data.Csv (DecodeOptions (decDelimiter), EncodeOptions (encDelimiter), FromNamedRecord, decodeByNameWith, defaultDecodeOptions, defaultEncodeOptions, encodeWith, parseNamedRecord, (.:))
 import Data.Text (splitOn)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
@@ -143,14 +144,34 @@ main = do
           eitherOutputJson <- decodeFileEither outputJsonFile
           case eitherOutputJson of
             Right (outputJson :: KeyMap Value) -> do
-              let scores =
+              let responses =
                     filter
-                      ( \scores' ->
-                          fromMaybe False $ and <$> ((0 <) &&& (< 100)) <$> (scores' ^? key (fromText config.benchmark) . _Number)
+                      ( \response ->
+                          fromMaybe False $ and <$> ((0 <) &&& (< 100)) <$> (response ^? ix (fromText config.benchmark) . _Number)
                       )
-                      $ elems outputJson
-              let benchmarkMean = (sum $ scores ^.. traversed . key (fromText config.benchmark) . _Number) / fromIntegral (length scores)
-              pure ()
+                      $ outputJson
+                      ^.. traversed . _Object
+              -- We extract the score using `_Double` instead of `_Number` to safely perform division.
+              -- If dividing two `Scientific` values results in a repeating decimal, it throws: "fromRational has been applied to a repeating decimal which can't be represented as a Scientific!".
+              let meanBenchmarkScore = (sum $ responses ^.. traversed . ix (fromText config.benchmark) . _Double) / fromIntegral (length responses)
+              writeFileLBS ((takeBaseName file) <> ".tsv")
+                $ "entry\tscore\n"
+                <> encodeWith
+                  defaultEncodeOptions {encDelimiter = 9}
+                  ( mapMaybe
+                      ( \response -> do
+                          rawBenchmarkScore <- response ^? ix (fromText config.benchmark) . _Double
+                          (targetKey, targetScore') <- listToMaybe $ KeyMap.toList $ delete (fromText config.benchmark) response
+                          targetScore <- targetScore' ^? _Double
+                          pure
+                            ( Key.toText targetKey,
+                              if rawBenchmarkScore < targetScore
+                                then 100 - ((100 - targetScore) * (100 - meanBenchmarkScore) / (100 - rawBenchmarkScore))
+                                else targetScore * meanBenchmarkScore / rawBenchmarkScore
+                            )
+                      )
+                      responses
+                  )
             Left _ -> pure ()
     Left _ -> pure ()
 
