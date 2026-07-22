@@ -58,21 +58,21 @@ The target is to keep monthly usage under $100. I set this limit because most pr
 
 > What model does `sense` use?
 
-`sense` uses [`gemini-3.5-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash) for these reasons:
+`sense` uses [`gemini-3.6-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash) for these reasons:
 
-- On Text Arena, `gemini-3.5-flash` tops the list as the highest-ranking model that's under $10 per million output tokens without batching.
+- On Text Arena, `gemini-3.6-flash` tops the list as the highest-ranking model that's under $10 per million output tokens without batching.
 
-- `gemini-3.5-flash` is a production model.
+- `gemini-3.6-flash` is a production model.
 
-- Less capable models tend to change their scores dramatically if the order of phrases to evaluate gets swapped. `gemini-3.5-flash` seems pretty resistant to this order dependency. Even though `sense` keeps the benchmark phrase in a fixed spot, the model's native resistance boosts confidence in the scores.
+- Less capable models tend to change their scores dramatically if the order of phrases to evaluate gets swapped. `gemini-3.6-flash` seems pretty resistant to this order dependency. Even though `sense` keeps the benchmark phrase in a fixed spot, the model's native resistance boosts confidence in the scores.
 
-- `gemini-3.5-flash` allows running at a temperature of 0.
+- `gemini-3.6-flash` allows running at a temperature of 0.
 
 - Setting the thinking level to `minimal` effectively turns off thinking for this task.
 
-- `gemini-3.5-flash` [supports structured outputs](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash#:~:text=Supported-,Structured%20outputs,-Supported).
+- `gemini-3.6-flash` [supports structured outputs](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash#:~:text=Supported-,Structured%20outputs,-Supported).
 
-- `gemini-3.5-flash` [supports the Batch API](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash#:~:text=Consumption%20options-,Batch%20API,-Supported).
+- `gemini-3.6-flash` [supports the Batch API](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash#:~:text=Consumption%20options-,Batch%20API,-Supported).
 
 > Does `sense` use a system prompt?
 
@@ -102,7 +102,7 @@ Allowing thinking has these downsides:
 
 - You could be charged for thinking tokens.
 
-- Setting `temperature` to 0 might mess up the model's thinking, since [Gemini 3.x's reasoning capabilities are optimized for the default settings](https://ai.google.dev/gemini-api/docs/whats-new-gemini-3.5#parameter-updates:~:text=The%20following%20apply,the%20default%20settings.).
+- Setting `temperature` to 0 might mess up the model's thinking, since [Gemini 3.x's reasoning capabilities are optimized for the default settings](https://ai.google.dev/gemini-api/docs/whats-new-gemini-3.6#parameter-updates:~:text=The%20following%20apply,the%20default%20settings.).
 
 > Does `sense` use structured outputs?
 
