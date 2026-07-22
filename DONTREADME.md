@@ -60,7 +60,7 @@ The target is to keep monthly usage under $100. I set this limit because most pr
 
 `sense` uses [`gemini-3.6-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash) for these reasons:
 
-- On Text Arena, `gemini-3.6-flash` tops the list as the highest-ranking model that's under $10 per million output tokens without batching.
+- On [Text Arena](https://arena.ai/leaderboard/text), `gemini-3.6-flash` tops the list as the highest-ranking model that's under $10 per million output tokens without batching.
 
 - `gemini-3.6-flash` is a production model.
 
