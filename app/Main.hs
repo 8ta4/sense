@@ -271,7 +271,7 @@ baseUrl :: Url 'Https
 baseUrl = https "generativelanguage.googleapis.com" /: "v1beta"
 
 model :: Text
-model = "gemini-3.5-flash"
+model = "gemini-3.6-flash"
 
 batchLimit :: Int
 batchLimit = 2 ^ (16 :: Int)
