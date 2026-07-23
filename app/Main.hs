@@ -265,10 +265,13 @@ poll request = runReq defaultHttpConfig $ do
     Nothing -> pure []
 
 batchUrl :: Url 'Https
-batchUrl = baseUrl /: "models" /: "gemini-3.5-flash:batchGenerateContent"
+batchUrl = baseUrl /: "models" /: model <> ":batchGenerateContent"
 
 baseUrl :: Url 'Https
 baseUrl = https "generativelanguage.googleapis.com" /: "v1beta"
+
+model :: Text
+model = "gemini-3.5-flash"
 
 batchLimit :: Int
 batchLimit = 2 ^ (16 :: Int)
