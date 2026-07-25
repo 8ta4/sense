@@ -170,7 +170,13 @@ But `sense` skips that. Making multiple requests per phrase incurs more API call
 
 A TSV output file has two columns.
 
-The first column has the target phrase, and the second one has the normalized score. The entries are ordered by descending score.
+The first column has the target phrase, and the second one has the normalized score.
+
+> Are the entries in a TSV output file sorted?
+
+Yes.
+
+The entries are sorted by descending normalized score, then by ascending target phrase.
 
 > Will `sense` overwrite an existing TSV output file?
 
