@@ -66,7 +66,7 @@ Specifically, it's the percentage of Americans 10 years or older who would under
 
 - "10 years or older" filters out babies, making it easier to sanity-check the model output, as super obvious connections should hit near 100%.
 
-- "Understand a joke connecting the phrase to the theme" is kinda undefined, because it hinges on a hypothetical joke. But testing found that a tighter framing made the LLM spew out nonsense scores. Because the `sense` tool's aim is to spot double meanings for comedy writing, framing the prompt as a joke fits the use case.
+- "Understand a joke connecting the phrase to the theme" is kinda undefined, because it hinges on a hypothetical joke. But testing found that a tighter framing made the LLM spew out nonsense scores. Because `sense`'s aim is to spot double meanings for comedy writing, framing the prompt as a joke fits the use case.
 
 > Is the connection score an integer?
 
