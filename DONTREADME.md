@@ -56,6 +56,22 @@ The target is to keep monthly usage under $100. I set this limit because most pr
 
 ## Scoring
 
+> Can the connection score be negative?
+
+No, because it's a percentage.
+
+Specifically, it's the percentage of Americans 10 years or older who would understand a joke connecting the phrase to the theme.
+
+- "Americans" pins it to a clear population, avoiding wishy-washy concepts like "native speakers" that are open to interpretation. Because the U.S. has the biggest number of native English speakers worldwide, it makes sense to treat it as the default audience.
+
+- "10 years or older" filters out babies, making it easier to sanity-check the model output, as super obvious connections should hit near 100%.
+
+- "Understand a joke connecting the phrase to the theme" is kinda undefined, because it hinges on a hypothetical joke. But testing found that a tighter framing made the LLM spew out nonsense scores. Because the `sense` tool's aim is to spot double meanings for comedy writing, framing the prompt as a joke fits the use case.
+
+> Is the connection score an integer?
+
+Nah, it's a double. Doubles allow finer ordering.
+
 > What model does `sense` use?
 
 `sense` uses [`gemini-3.5-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash) for these reasons:
