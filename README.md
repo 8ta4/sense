@@ -54,3 +54,25 @@ Once the API batches finish, `sense` will drop two files into your current direc
 - fat.tsv: a file that contains normalized scores
 
 - fat.json: a file that contains raw scores
+
+> Can I run `sense` only on idioms?
+
+Yes.
+
+If you set `idioms: true` in your YAML file, `sense` will only run idioms.
+
+Checking the whole vocabulary:
+
+- costs a lot.
+
+- gives you phrases that only have one meaning.
+
+Limiting the run to idioms:
+
+- costs a fraction of the price.
+
+- guarantees multiple meanings because an idiom has both a literal meaning and an idiomatic one.
+
+For common topics, you can evaluate the whole vocabulary without `idioms: true` to prioritize recall. Finding as many potential double meanings as possible may be worth the extra cost and review time.
+
+For niche topics, you can set `idioms: true` to prioritize precision. You might prefer a reliable set of double meanings at a lower cost rather than complete coverage.
