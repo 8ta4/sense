@@ -76,7 +76,7 @@ Nah, it's a double. Doubles allow finer ordering.
 
 `sense` uses [`gemini-3.5-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash) for these reasons:
 
-- Among models that cost under $10 per million output tokens without batching, have a public API, and offer solid scoring, `gemini-3.5-flash` ranks highest on [Text Arena](https://arena.ai/leaderboard/text). `gemini-3.5-flash` can be a bit hit-or-miss with its scores.
+- Among models that cost under $10 per million output tokens without batching, have a public API, and offer solid scoring, `gemini-3.5-flash` ranks highest on [Text Arena](https://arena.ai/leaderboard/text). `gemini-3.6-flash` can be a bit hit-or-miss with its scores.
 
 - `gemini-3.5-flash` is a production model.
 
