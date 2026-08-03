@@ -1,4 +1,4 @@
-# https://github.com/cachix/devenv/blob/32f6747aabbd5aeb7413bae53d7e01e224ec77bc/docs/src/integrations/github-actions.md?plain=1#L128
+# https://github.com/cachix/devenv/blob/8d137046f53dcaa43ce097e3e2fb0ef8f66deafb/docs/src/integrations/github-actions.md?plain=1#L128-L160
 name: "Test"
 
 on:
