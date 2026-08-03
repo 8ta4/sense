@@ -5,5 +5,4 @@ inputs:
       nixpkgs:
         follows: nixpkgs
   nixpkgs:
-    # TODO: pin to a specific nixpkgs version
-    url: github:cachix/devenv-nixpkgs/rolling
+    url: github:NixOS/nixpkgs/nixos-26.05
