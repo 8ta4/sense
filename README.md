@@ -39,7 +39,8 @@
 1. Make a YAML config file like this in the current directory.
 
    ```yaml
-   benchmark: "on one's plate"
+   meaning: "Used other than figuratively or idiomatically: see on, plate."
+   phrase: "on one's plate"
    theme: "fat"
    ```
 
