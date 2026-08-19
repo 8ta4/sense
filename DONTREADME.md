@@ -14,31 +14,25 @@ Instead, `sense` leans on a large language model (LLM) to score connections.
 
 ### Coverage
 
-> Does `sense` evaluate every English word?
+> Does `sense` evaluate every meaning of any English word?
 
 No.
 
 `sense` pulls its vocabulary from English Wiktionary entries.
 
-> Does `sense` evaluate every English word in Wiktionary?
+> Does `sense` evaluate every meaning from Wiktionary?
 
 No.
 
-Evaluating every English word in Wiktionary would cost too much.
+Evaluating every meaning in Wiktionary would cost too much.
 
-`sense` narrows its scope based on the following criteria:
+`sense` throws out meanings that fail to meet both of the following criteria:
 
-- Wiktionary tags the phrase as `English lemmas`.
+- 50% or more of Americans aged 10 or older are thought to know the meaning.
 
-- About half of Americans aged 10 and up are thought to know the phrase's most common meaning.
+- The meaning is tagged as `idiomatic`, or the phrase has another meaning that 50% or more of Americans aged 10 or older are thought to know.
 
-> Does `sense` process a Wiktionary dump?
-
-No.
-
-`sense` pulls the `wiktionary.tsv` file from the [`prevalence-data`](https://github.com/8ta4/prevalence-data) repo.
-
-> Does `sense` check both single words and multi-word phrases for double meanings?
+> Does `sense` evaluate both single words and multi-word phrases for double meanings?
 
 Yes.
 
