@@ -12,6 +12,8 @@
 
 1. Make sure you're using a Mac with Apple silicon.
 
+1. Make sure the billing account linked to your Google AI Studio project is on Tier 2.
+
 1. Install [Homebrew](https://brew.sh/#install).
 
 1. Install [devenv](https://github.com/cachix/devenv/blob/83e8d7d34bdebad98ab936b6af53d57ae67af420/docs/src/getting-started.md#installation).
