@@ -230,7 +230,7 @@ Submitting the whole list of phrases in one batch would exceed the enqueued toke
 
 Instead, `sense` splits the list into batches.
 
-Tier 2 boosts the token limit a lot. But Tier 2 requires [a $100 payment and a three‑day waiting period after your first payment](https://ai.google.dev/gemini-api/docs/rate-limits#:~:text=Paid%20%24100%20%2B%203%20days%20from%20first%20successful%20payment). `sense` is designed to work on Tier 1, so you can use the tool immediately without paying a steep upfront cost.
+Tier 2 boosts the token limit a lot. But Tier 2 requires [a $100 payment and a three‑day waiting period after your first payment](https://ai.google.dev/gemini-api/docs/rate-limits#:~:text=Paid%20%24100%20%2B%203%20days%20from%20first%20successful%20payment). `sense` is designed to work on Tier 1, so you can use the tool immediately without paying a steep upfront cost.
 
 > Does `sense` send multiple batches simultaneously?
 
