@@ -222,27 +222,29 @@ No.
 
 ## Batching
 
-> Does `sense` submit the whole list of phrases in one batch?
+> Does `sense` automatically loop to submit multiple batches?
 
 No.
 
-Submitting the whole list of phrases in one batch would exceed the enqueued token limit of Gemini's Tier 1 Batch API.
+`sense` submits at most one batch per command invocation.
 
-Instead, `sense` splits the list into batches.
+If an error occurs, loops on large datasets can cause runaway billing.
 
-Tier 2 boosts the token limit a lot. But Tier 2 requires [a $100 payment and a three‑day waiting period after your first payment](https://ai.google.dev/gemini-api/docs/rate-limits#:~:text=Paid%20%24100%20%2B%203%20days%20from%20first%20successful%20payment). `sense` is designed to work on Tier 1, so you can use the tool immediately without paying a steep upfront cost.
-
-> Does `sense` send multiple batches simultaneously?
-
-No.
-
-`sense` processes batches sequentially. That way, I dodge the headache of tracking a bunch of active batch names.
-
-> Does `sense` wait for a batch to finish?
+> Does `sense` require Tier 2?
 
 Yes.
 
-`sense` stays running in the terminal to monitor the active batch. When the batch finishes, `sense` downloads the results, merges them, and submits the next batch if there's another one.
+Tier 1 limits enqueued tokens for `gemini-3.6-flash` to [3,000,000](https://ai.google.dev/gemini-api/docs/rate-limits#:~:text=Gemini%203.6%20Flash-,3%2C000%2C000,-Gemini%203.5%20Flash). So evaluating the full dataset on Tier 1 would theoretically require invoking `sense` a bunch of times.
+
+Tier 2 bumps the limits for `gemini-3.6-flash` up by roughly an order of magnitude, raising them to [400,000,000](https://ai.google.dev/gemini-api/docs/rate-limits#tier-2:~:text=Gemini%203.6%20Flash-,400%2C000%2C000,-Gemini%203.5%20Flash) enqueued tokens. In theory, this boost cuts down on the number of manual runs. If one run is enough, that'd be a batch made in heaven.
+
+> Does `sense` wait for the batch to finish?
+
+Yes.
+
+`sense` stays running in the terminal to monitor the active batch.
+
+If the batch completes successfully, `sense` processes the results into the output files.
 
 > What's the polling interval?
 
@@ -263,12 +265,6 @@ No.
 Yes.
 
 If the `sense` process quits before making the output files, running the command again will pick up where it left off.
-
-> Does `sense` write an incomplete JSON file to the current working directory?
-
-No.
-
-When it's gathering data, `sense` puts the growing JSON file into `~/.local/state/sense/`. `sense` only drops completed files into the current working directory when the JSON file is complete.
 
 > Does a crash during a write operation corrupt the accumulated results?
 
