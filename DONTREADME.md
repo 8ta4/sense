@@ -184,21 +184,53 @@ But `sense` skips that. Making multiple requests per phrase incurs more API call
 
 > How many columns does a TSV output file have?
 
-A TSV output file has two columns.
+A TSV output file comes with three columns:
 
-The first column has the target phrase, and the second one has the normalized score.
+1. The target phrase
 
-> Are the entries in a TSV output file sorted?
+1. The target meaning
+
+1. The normalized connection score
+
+> Does a TSV file group meanings by phrase?
 
 Yes.
 
-The entries are sorted by descending normalized score, then by ascending target phrase.
+All the meanings of a target phrase appear together in a block.
+
+Grouping all the meanings of the same phrase side by side helps you compare them when you're crafting a joke.
 
 > Will `sense` overwrite an existing TSV output file?
 
 No.
 
 If the output TSV file is found in your current directory, the tool shuts down so you don't duplicate work.
+
+> Are the phrase blocks sorted?
+
+Yes.
+
+> What are phrase blocks sorted by?
+
+Phrase blocks are sorted by the difference between their highest and lowest scores.
+
+> Are phrase blocks sorted in ascending or descending order?
+
+Phrase blocks are sorted in descending order.
+
+Phrases with the biggest contrast are meant to appear at the top of the file.
+
+> Are the meanings sorted within each phrase block?
+
+Yes.
+
+> What are the meanings within each phrase block sorted by?
+
+The meanings in each phrase block are sorted by their connection scores.
+
+> Are meanings within each phrase block sorted in ascending or descending order?
+
+Meanings within each block are sorted in descending order.
 
 > Is a JSON output file a JSON array?
 
