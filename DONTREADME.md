@@ -256,7 +256,7 @@ No.
 
 `sense` grabs a lock. The second instance run will fail to acquire the lock.
 
-## Resumability
+## Resuming
 
 > Can `sense` keep going if it gets interrupted?
 
