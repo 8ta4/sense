@@ -38,18 +38,10 @@
 
 1. Open a terminal.
 
-1. Make a YAML config file like this in the current directory.
-
-   ```yaml
-   meaning: "Used other than figuratively or idiomatically: see on, plate."
-   phrase: "on one's plate"
-   theme: "fat"
-   ```
-
-1. Run the command with your configuration file.
+1. Run the command with your topic.
 
    ```bash
-   sense fat.yaml
+   sense fat
    ```
 
 Once the API batches finish, `sense` will drop two files into your current directory:
@@ -62,7 +54,12 @@ Once the API batches finish, `sense` will drop two files into your current direc
 
 Yes.
 
-If you set `idioms: true` in your YAML file, `sense` will only run idioms.
+If you use the `-i` flag, `sense` will only run idioms.
+
+
+   ```bash
+   sense -i fat
+   ```
 
 Checking the whole vocabulary:
 
@@ -76,6 +73,6 @@ Limiting the run to idioms:
 
 - guarantees multiple meanings because an idiom has both a literal meaning and an idiomatic one.
 
-For common topics, you can evaluate the whole vocabulary without `idioms: true` to prioritize recall. Finding as many potential double meanings as possible may be worth the extra cost and review time.
+For common topics, you can evaluate the whole vocabulary without `-i` to prioritize recall. Finding as many potential double meanings as possible may be worth the extra cost and review time.
 
-For niche topics, you can set `idioms: true` to prioritize precision. You might prefer a reliable set of double meanings at a lower cost rather than complete coverage.
+For niche topics, you can use `-i` to prioritize precision. You might prefer a reliable set of double meanings at a lower cost rather than complete coverage.
