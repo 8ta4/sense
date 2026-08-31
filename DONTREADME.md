@@ -14,6 +14,12 @@ Instead, `sense` leans on a large language model (LLM) to score connections.
 
 ### Coverage
 
+> Does `sense` evaluate both single words and multi-word phrases for double meanings?
+
+Yes.
+
+Both can act as pivots.
+
 > Does `sense` evaluate every meaning of any English word?
 
 No.
@@ -31,16 +37,6 @@ Evaluating every meaning in Wiktionary would cost too much.
 - 50% or more of Americans aged 10 or older are thought to know the meaning.
 
 - The meaning is tagged as `idiomatic`, or the phrase has another meaning that 50% or more of Americans aged 10 or older are thought to know.
-
-> Does `sense` evaluate both single words and multi-word phrases for double meanings?
-
-Yes.
-
-Both can act as pivots:
-
-- "[Obese children put a lot of strain on the NHS, not to mention seesaws and swings.](https://youtu.be/6wplEAkNXow?t=1671)"
-
-- "[She recently went to her GP just for the annual checkup. She was classified by her own GP as being morbidly obese. Who came up with that term? That's so unnecessarily harsh, morbidly obese as if she doesn't have enough on her plate.](https://youtu.be/Tehlt1P-NM0?t=2907)"
 
 ### Budget
 
