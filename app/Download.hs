@@ -10,10 +10,10 @@ main = do
   home <- getHomeDirectory
   let statePath = home </> ".local/state/sense"
       partsPath = statePath </> "parts"
-      bar = statePath </> "manifest.json"
+      manifestPath = statePath </> "manifest.json"
       extractedPath = statePath </> "raw-wiktextract-data.jsonl"
   createDirectoryIfMissing True partsPath
-  callProcess "wget" ["-O", bar, foo]
+  callProcess "wget" ["-O", manifestPath, manifestUrl]
 
-foo :: String
-foo = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/manifest.json"
+manifestUrl :: String
+manifestUrl = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/manifest.json"
