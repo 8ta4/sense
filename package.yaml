@@ -101,6 +101,8 @@ source-dirs: app
 # We avoid defining a separate library component to work around a Haskell Language Server (HLS) issue with cross-component dependencies.
 # HLS does not reflect changes made in the library component within the executable component until the library is recompiled and HLS is restarted.
 executables:
+  download:
+    main: Download
   sense:
     main: Main
 
