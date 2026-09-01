@@ -13,6 +13,7 @@
     pkgs.git
     pkgs.gitleaks
     pkgs.rubyPackages.solargraph
+    pkgs.wget
   ];
 
   # https://devenv.sh/languages/
