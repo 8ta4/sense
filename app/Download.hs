@@ -14,6 +14,8 @@ main = do
       extractedPath = statePath </> "raw-wiktextract-data.jsonl"
   createDirectoryIfMissing True partsPath
   callProcess "wget" ["-O", manifestPath, manifestUrl]
+  content <- readFileLBS manifestPath
+  pure ()
 
 manifestUrl :: String
 manifestUrl = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/manifest.json"
