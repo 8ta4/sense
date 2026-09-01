@@ -1,9 +1,18 @@
 module Download where
 
+import Control.Lens ((^..))
+import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson.Lens (key, values, _JSON)
 import Relude
 import System.Directory (createDirectoryIfMissing, getHomeDirectory)
 import System.FilePath ((</>))
 import System.Process (callProcess)
+
+data Part = Part
+  { url :: !Text,
+    hash :: !Text
+  }
+  deriving (Show, ToJSON, FromJSON, Generic)
 
 main :: IO ()
 main = do
@@ -15,6 +24,7 @@ main = do
   createDirectoryIfMissing True partsPath
   callProcess "wget" ["-O", manifestPath, manifestUrl]
   content <- readFileLBS manifestPath
+  let parts :: [Part] = content ^.. key "parts" . values . _JSON
   pure ()
 
 manifestUrl :: String
