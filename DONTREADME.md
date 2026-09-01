@@ -14,7 +14,7 @@ Instead, `sense` leans on a large language model (LLM) to score connections.
 
 ### Coverage
 
-> Does `sense` evaluate both single words and multi-word phrases for double meanings?
+> Does `sense` evaluate both single words and multiword phrases for double meanings?
 
 Yes.
 
@@ -114,19 +114,47 @@ Yes.
 
 Using structured outputs makes sure the API response includes the scoring fields `sense` needs.
 
-> How many phrases are sent to the LLM per rating request?
+> How many items does each request in a batch evaluate?
 
-Each request includes two phrases.
+Each request in a batch evaluates two items:
 
-- The benchmark phrase used to set the baseline across requests.
+- The benchmark item, which sets the baseline across requests.
 
-- The target phrase the system grabs while looping through the vocabulary.
+- The target item, which pairs a vocabulary entry with the topic passed in the command.
 
-> Is the benchmark phrase or the target phrase scored first?
+> What fields does each item in a rating request have?
 
-The benchmark phrase gets scored first.
+Each item has three fields.
 
-Scoring the benchmark phrase first makes sure it's evaluated before the target phrase's score is generated. This way, the benchmark phrase's context stays more alike across requests compared to using the reverse order.
+- `phrase`: A word or a multiword term.
+
+- `meaning`: A Wiktionary gloss.
+
+- `topic`: A topic to evaluate the phrase and meaning against.
+
+> What is the benchmark phrase?
+
+`sense` uses `dog`.
+
+The benchmark meaning is `A dull, unattractive girl or woman.` The benchmark topic is `ugly`.
+
+A benchmark phrase should meet these criteria:
+
+- At least two meanings are recognized by at least half of Americans 10 years or older.
+
+- The benchmark meaning is so clearly tied to the topic that false positives get filtered out.
+
+- A popular comic used the phrase in a double‑meaning joke in their stand‑up special.
+
+- The phrase is a short word to minimize token costs across batch runs.
+
+I watched Jimmy Carr's stand‑up specials on YouTube, joke by joke. Only the word `dog` met all the above criteria. Here's the joke: "A dog is for life, not just for Christmas. So do be careful at the office party."
+
+> Is the benchmark item or the target item scored first?
+
+The benchmark item gets scored first.
+
+Scoring the benchmark item first makes sure it's evaluated before the target item's score is generated. This way, the benchmark item's context stays more alike across requests compared to using the reverse order.
 
 > Are the connection scores normalized across multiple requests?
 
@@ -148,25 +176,25 @@ $$
 
 where:
 
-- $X$: The original score of a target phrase in the current request.
+- $X$: The original score of a target item in the current request.
 
-- $\bar{X}$: The normalized score of the target phrase.
+- $\bar{X}$: The normalized score of the target item.
 
-- $B$: The score of the benchmark phrase in the current request.
+- $B$: The score of the benchmark item in the current request.
 
-- $\bar{B}$: The mean score of the benchmark phrase across all requests.
+- $\bar{B}$: The mean score of the benchmark item across all requests.
 
 It's assumed that $B \neq 0$ and $B \neq 100$. If $B$ ever hits 0 or 100, the pair gets dropped during normalization.
 
-This piecewise approach ensures that scores of 0% and 100% remain unchanged, while scores near the benchmark are adjusted proportionally to the benchmark phrase's difference from its mean.
+This piecewise approach ensures that scores of 0% and 100% remain unchanged, while scores near the benchmark are adjusted proportionally to the benchmark item's difference from its mean.
 
-> Does `sense` score each phrase multiple times and average the results?
+> Does `sense` score each item multiple times and average the results?
 
 No.
 
-Running the same phrase a couple of times and averaging the results could potentially help smooth out any random noise.
+Running the same item a couple of times and averaging the results could potentially help smooth out any random noise.
 
-But `sense` skips that. Making multiple requests per phrase incurs more API calls.
+But `sense` skips that. Making multiple requests per item incurs more API calls.
 
 ## Output
 
@@ -232,13 +260,13 @@ Using a JSON object instead of an array gives you these perks:
 
 - Merging batch results into a map by key is idempotent. Merging the same batch data more than once will replace the current keys with identical score data rather than creating duplicate entries.
 
-> Does `sense` split single words and multi-word phrases into separate output files?
+> Does `sense` split single words and multiword phrases into separate output files?
 
 No.
 
-- You'll probably want to search both single words and multi-word phrases at once.
+- You'll probably want to search both single words and multiword phrases at once.
 
-- If you ever need to split single words from multi-word phrases, it's easy to filter the data in a spreadsheet by checking for spaces in the entries.
+- If you ever need to split single words from multiword phrases, it's easy to filter the data in a spreadsheet by checking for spaces in the entries.
 
 ## Batching
 
