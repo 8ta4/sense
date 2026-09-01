@@ -132,11 +132,11 @@ Each item has three fields.
 
 - `topic`: A topic to evaluate the phrase and meaning against.
 
-> Does `mean` use JSON in a prompt to format items for evaluation?
+> Does `sense` use JSON in a prompt to format items for evaluation?
 
 No.
 
-`mean` puts each item on its own line as an EDN map, which helps save token usage.
+`sense` puts each item on its own line as an EDN map, which helps save token usage.
 
 > What is the benchmark phrase?
 
