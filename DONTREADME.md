@@ -118,7 +118,7 @@ Using structured outputs makes sure the API response includes the scoring fields
 
 Each request includes two phrases.
 
-- The benchmark phrase you give to set the baseline across requests.
+- The benchmark phrase used to set the baseline across requests.
 
 - The target phrase the system grabs while looping through the vocabulary.
 
