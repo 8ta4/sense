@@ -56,9 +56,9 @@ Yes.
 
 If you use the `-i` flag, `sense` will only run idioms.
 
-   ```bash
-   sense -i fat
-   ```
+```bash
+sense -i fat
+```
 
 Checking the whole vocabulary:
 
