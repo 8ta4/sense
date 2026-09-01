@@ -20,7 +20,13 @@ extra-source-files:
 description: Please see the README on GitHub at <https://github.com/githubuser/sense#readme>
 
 dependencies:
+  - aeson
   - base >= 4.7 && < 5
+  - directory
+  - filepath
+  - lens
+  - lens-aeson
+  - process
   - relude
 
 ghc-options:
@@ -69,6 +75,7 @@ default-extensions:
   - ConstraintKinds
   - DataKinds
   - DefaultSignatures
+  - DeriveAnyClass
   - DeriveFunctor
   - DeriveFoldable
   - DeriveTraversable
@@ -101,6 +108,8 @@ source-dirs: app
 # We avoid defining a separate library component to work around a Haskell Language Server (HLS) issue with cross-component dependencies.
 # HLS does not reflect changes made in the library component within the executable component until the library is recompiled and HLS is restarted.
 executables:
+  download:
+    main: Download
   sense:
     main: Main
 
