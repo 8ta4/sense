@@ -258,13 +258,7 @@ Meanings within each block are sorted in descending order.
 
 No.
 
-A JSON output file is a JSON object. The keys hold the target phrases, while the values hold the maps the API returns.
-
-Using a JSON object instead of an array gives you these perks:
-
-- The keys in the accumulating JSON file serve as the single source of truth for completed work.
-
-- Merging batch results into a map by key is idempotent. Merging the same batch data more than once will replace the current keys with identical score data rather than creating duplicate entries.
+A JSON output file is a JSON object. The object maps each phrase to an object whose keys are its meanings and whose values are raw score pairs for the benchmark and target items. If you adjust the formula, you can run the normalization again without incurring another batch API charge.
 
 > Does `sense` split single words and multiword phrases into separate output files?
 
