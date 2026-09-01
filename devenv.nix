@@ -39,7 +39,7 @@
   # The fix is to disable the warning during initial GHCi loading in a .ghci file with `:set -Wno-prepositive-qualified-module`
   # and then use this ghcid command to re-enable it after ghcid has successfully started.
   # The trade-off is that the initial module load is not checked for this specific warning.
-  scripts.sense-watch.exec = ''
+  scripts.watch-sense.exec = ''
     ghcid -a \
     -c 'stack ghci' \
     --no-height-limit \
@@ -48,7 +48,7 @@
     -s ':set -Wprepositive-qualified-module' \
     -W
   '';
-  scripts.test-watch.exec = ''
+  scripts.watch-test.exec = ''
     stack test --file-watch
   '';
 
