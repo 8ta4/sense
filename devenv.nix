@@ -12,11 +12,7 @@
     pkgs.ghcid
     pkgs.git
     pkgs.gitleaks
-    pkgs.pre-commit
     pkgs.rubyPackages.solargraph
-    # Provides 'zlib.h', which is required by the Haskell 'req' package via the 'zlib' library dependency.
-    # Without this, 'stack build' fails with: "fatal error: 'zlib.h' file not found".
-    pkgs.zlib
   ];
 
   # https://devenv.sh/languages/
@@ -48,7 +44,7 @@
     -c 'stack ghci' \
     --no-height-limit \
     -r \
-    -s ":set args fat.yaml" \
+    -s ":set args fat" \
     -s ':set -Wprepositive-qualified-module' \
     -W
   '';

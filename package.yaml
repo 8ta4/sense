@@ -20,18 +20,8 @@ extra-source-files:
 description: Please see the README on GitHub at <https://github.com/githubuser/sense#readme>
 
 dependencies:
-  - aeson
   - base >= 4.7 && < 5
-  - cassava
-  - directory
-  - filepath
-  - lens
-  - lens-aeson
-  - optparse-applicative
   - relude
-  - req
-  - vector
-  - yaml
 
 ghc-options:
   # https://github.com/commercialhaskell/stack-templates/blob/360442dbdc3d114df5fe377306978d4f47694370/new-template.hsfiles#L45-L47
