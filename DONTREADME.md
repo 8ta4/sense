@@ -154,7 +154,7 @@ A benchmark phrase should meet these criteria:
 
 - The phrase is a short word to minimize token costs across batch runs.
 
-I watched Jimmy Carr's stand‑up specials on YouTube, joke by joke. Only the word `dog` met all the above criteria. Here's the joke: "A dog is for life, not just for Christmas. So do be careful at the office party."
+I watched Jimmy Carr's stand‑up specials on YouTube, joke by joke. Only the word `dog` met all the above criteria. Here's the joke: "[A dog is for life, not just for Christmas. So do be careful at the office party.](https://youtu.be/wwQS2YZhQ40?t=3875)"
 
 > Is the benchmark item or the target item scored first?
 
