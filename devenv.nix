@@ -25,7 +25,9 @@
   # services.postgres.enable = true;
 
   # https://devenv.sh/scripts/
-  scripts.download.exec = "";
+  scripts.download.exec = ''
+    stack run download
+  '';
   scripts.hello.exec = ''
     echo hello from $GREET
   '';
