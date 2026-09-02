@@ -22,7 +22,7 @@ main = do
   home <- getHomeDirectory
   let statePath = home </> ".local/state/sense"
       partsPath = statePath </> "parts"
-      dataPath = statePath </> toString dataFilename
+      meanPath = statePath </> toString meanFilename
       manifestPath = statePath </> toString manifestFilename
       extractedPath = statePath </> "raw-wiktextract-data.jsonl"
       downloadPart part = do
@@ -33,21 +33,21 @@ main = do
           then pure partContent
           else error "Checksum verification failed"
   createDirectoryIfMissing True partsPath
-  callProcess "wget" ["-O", dataPath, dataUrl]
+  callProcess "wget" ["-O", meanPath, meanUrl]
   callProcess "wget" ["-O", manifestPath, manifestUrl]
   manifestContent <- readFileLBS manifestPath
   let parts :: [Part] = manifestContent ^.. key "parts" . values . _JSON
   partContents <- traverse downloadPart parts
   writeFileLBS extractedPath $ decompress $ fold partContents
 
-dataUrl :: String
-dataUrl = toString $ baseUrl <> dataFilename
+meanUrl :: String
+meanUrl = toString $ baseUrl <> meanFilename
 
 baseUrl :: Text
 baseUrl = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/"
 
-dataFilename :: Text
-dataFilename = "mean.json.zst"
+meanFilename :: Text
+meanFilename = "mean.json.zst"
 
 manifestUrl :: String
 manifestUrl = toString $ baseUrl <> manifestFilename
