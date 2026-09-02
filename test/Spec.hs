@@ -1,6 +1,9 @@
 module Spec where
 
 import Relude
+import Sense (loadApiKeyHeader)
 
 main :: IO ()
-main = pure ()
+main = do
+  apiKeyHeader <- loadApiKeyHeader
+  pure ()

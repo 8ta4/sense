@@ -76,6 +76,7 @@ executable download
     , lens-aeson
     , process
     , relude
+    , req
     , zlib
   default-language: Haskell2010
 
@@ -132,6 +133,7 @@ executable sense
     , lens-aeson
     , process
     , relude
+    , req
     , zlib
   default-language: Haskell2010
 
@@ -191,5 +193,6 @@ test-suite spec
     , lens-aeson
     , process
     , relude
+    , req
     , zlib
   default-language: Haskell2010
