@@ -114,7 +114,7 @@ executables:
   download:
     main: Download
   sense:
-    main: Main
+    main: Sense
 
 tests:
   spec:

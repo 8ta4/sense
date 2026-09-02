@@ -1,4 +1,4 @@
-module Main where
+module Sense where
 
 import Relude
 
