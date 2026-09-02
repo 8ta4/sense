@@ -2,7 +2,7 @@ module Sense where
 
 import Data.Aeson (KeyValue ((.=)), ToJSON, Value, encode, object)
 import Data.Aeson.Key
-import Network.HTTP.Req (Option, Scheme (Https), header)
+import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
 import Relude
 import System.Directory (getHomeDirectory)
 import System.FilePath ((</>))
@@ -89,3 +89,12 @@ percentageSchema =
 
 systemPrompt :: Text
 systemPrompt = "Estimate the percentage of Americans 10 years or older who consider each meaning on topic."
+
+baseUrl :: Url 'Https
+baseUrl = host /: "v1beta"
+
+host :: Url 'Https
+host = https "generativelanguage.googleapis.com"
+
+model :: Text
+model = "gemini-3.6-flash"
