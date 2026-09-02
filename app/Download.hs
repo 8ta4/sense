@@ -22,7 +22,7 @@ main = do
   home <- getHomeDirectory
   let statePath = home </> ".local/state/sense"
       partsPath = statePath </> "parts"
-      manifestPath = statePath </> "manifest.json"
+      manifestPath = statePath </> toString manifestFilename
       extractedPath = statePath </> "raw-wiktextract-data.jsonl"
       downloadPart part = do
         let partPath = partsPath </> takeFileName part.url
@@ -38,5 +38,17 @@ main = do
   partContents <- traverse downloadPart parts
   writeFileLBS extractedPath $ decompress $ fold partContents
 
+dataUrl :: String
+dataUrl = toString $ baseUrl <> dataFilename
+
+baseUrl :: Text
+baseUrl = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/"
+
+dataFilename :: Text
+dataFilename = "mean.json.zst"
+
 manifestUrl :: String
-manifestUrl = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/manifest.json"
+manifestUrl = toString $ baseUrl <> manifestFilename
+
+manifestFilename :: Text
+manifestFilename = "manifest.json"
