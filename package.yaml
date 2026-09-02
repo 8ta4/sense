@@ -28,6 +28,7 @@ dependencies:
   - filepath
   - lens
   - lens-aeson
+  - optparse-applicative
   - process
   - relude
   - req

@@ -75,6 +75,7 @@ executable download
     , filepath
     , lens
     , lens-aeson
+    , optparse-applicative
     , process
     , relude
     , req
@@ -133,6 +134,7 @@ executable sense
     , filepath
     , lens
     , lens-aeson
+    , optparse-applicative
     , process
     , relude
     , req
@@ -194,6 +196,7 @@ test-suite spec
     , filepath
     , lens
     , lens-aeson
+    , optparse-applicative
     , process
     , relude
     , req

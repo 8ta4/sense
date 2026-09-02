@@ -3,6 +3,8 @@ module Sense where
 import Data.Aeson (KeyValue ((.=)), ToJSON, Value, encode, object)
 import Data.Aeson.Key
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
+import Options.Applicative (execParser, helper, strArgument)
+import Options.Applicative.Builder (info)
 import Path (getMeanPath, getStatePath, getWiktextractPath)
 import Relude
 import System.Directory (getHomeDirectory)
@@ -13,6 +15,7 @@ main = do
   statePath <- getStatePath
   meanPath <- getMeanPath
   wiktextractPath <- getWiktextractPath
+  targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   pure ()
 
 loadApiKeyHeader :: IO (Option 'Https)
