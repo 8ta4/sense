@@ -30,6 +30,7 @@ dependencies:
   - lens-aeson
   - process
   - relude
+  - req
   - zlib
 
 ghc-options:

@@ -14,6 +14,7 @@
     pkgs.gitleaks
     pkgs.rubyPackages.solargraph
     pkgs.wget
+    pkgs.zstd
   ];
 
   # https://devenv.sh/languages/
