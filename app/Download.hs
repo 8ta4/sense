@@ -22,6 +22,7 @@ main = do
   home <- getHomeDirectory
   let statePath = home </> ".local/state/sense"
       partsPath = statePath </> "parts"
+      dataPath = statePath </> toString dataFilename
       manifestPath = statePath </> toString manifestFilename
       extractedPath = statePath </> "raw-wiktextract-data.jsonl"
       downloadPart part = do
@@ -32,6 +33,7 @@ main = do
           then pure partContent
           else error "Checksum verification failed"
   createDirectoryIfMissing True partsPath
+  callProcess "wget" ["-O", dataPath, dataUrl]
   callProcess "wget" ["-O", manifestPath, manifestUrl]
   manifestContent <- readFileLBS manifestPath
   let parts :: [Part] = manifestContent ^.. key "parts" . values . _JSON
