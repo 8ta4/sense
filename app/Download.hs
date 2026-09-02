@@ -34,6 +34,7 @@ main = do
           else error "Checksum verification failed"
   createDirectoryIfMissing True partsPath
   callProcess "wget" ["-O", meanPath, meanUrl]
+  callProcess "unzstd" [meanPath]
   callProcess "wget" ["-O", manifestPath, manifestUrl]
   manifestContent <- readFileLBS manifestPath
   let parts :: [Part] = manifestContent ^.. key "parts" . values . _JSON
