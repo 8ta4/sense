@@ -6,7 +6,7 @@ import Crypto.Hash.SHA256 (hashlazy)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Lens (key, values, _JSON)
 import Data.ByteString.Base16 qualified as Base16
-import Path (getMeanPath, getStatePath, getWiktextractPath)
+import Path (getStatePath, getWiktextractPath)
 import Relude
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath (takeFileName, (</>))
@@ -21,9 +21,9 @@ data Part = Part
 main :: IO ()
 main = do
   statePath <- getStatePath
-  meanPath <- getMeanPath
   wiktextractPath <- getWiktextractPath
   let partsPath = statePath </> "parts"
+      meanPath = statePath </> toString meanFilename <> ".zst"
       manifestPath = statePath </> toString manifestFilename
       downloadPart part = do
         let partPath = partsPath </> takeFileName part.url

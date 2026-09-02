@@ -9,13 +9,8 @@ getStatePath = do
   home <- getHomeDirectory
   pure $ home </> ".local/state/sense"
 
-getMeanPath :: IO FilePath
-getMeanPath = do
-  statePath <- getStatePath
-  pure $ statePath </> toString meanFilename
-
 meanFilename :: Text
-meanFilename = "mean.json.zst"
+meanFilename = "mean.json"
 
 getWiktextractPath :: IO FilePath
 getWiktextractPath = do

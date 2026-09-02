@@ -1,11 +1,11 @@
 module Sense where
 
 import Data.Aeson (KeyValue ((.=)), ToJSON, Value, encode, object)
-import Data.Aeson.Key
+import Data.Aeson.Key (fromText)
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
-import Path (getMeanPath, getStatePath, getWiktextractPath)
+import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
 import System.Directory (getHomeDirectory)
 import System.FilePath ((</>))
@@ -13,7 +13,7 @@ import System.FilePath ((</>))
 main :: IO ()
 main = do
   statePath <- getStatePath
-  meanPath <- getMeanPath
+  let meanPath = statePath </> toString meanFilename
   wiktextractPath <- getWiktextractPath
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   pure ()
