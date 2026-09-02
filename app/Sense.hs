@@ -17,13 +17,13 @@ loadApiKeyHeader = do
   pure $ header "x-goog-api-key" apiKey
 
 makeRequestPayload :: Text -> Text -> Text -> Value
-makeRequestPayload targetPhrase targetMeaning targetTopic =
+makeRequestPayload targetTopic targetPhrase targetMeaning =
   object
     [ "contents"
         .= [ object
                [ "parts"
                    .= [ object
-                          ["text" .= (renderEdn benchmarkPhrase benchmarkMeaning benchmarkTopic <> "\n" <> renderEdn targetPhrase targetMeaning targetTopic)]
+                          ["text" .= (renderEdn benchmarkTopic benchmarkPhrase benchmarkMeaning <> "\n" <> renderEdn targetTopic targetPhrase targetMeaning)]
                       ]
                ]
            ],
@@ -65,7 +65,7 @@ makeRequestPayload targetPhrase targetMeaning targetTopic =
 -- Haskell's `show` escapes non-ASCII Unicode characters using decimal escape sequences.
 -- `renderJson` uses JSON string escaping.
 renderEdn :: Text -> Text -> Text -> Text
-renderEdn phrase meaning topic = "{:phrase " <> renderJson phrase <> " :meaning " <> renderJson meaning <> " :topic " <> renderJson topic <> "}"
+renderEdn topic phrase meaning = "{:phrase " <> renderJson phrase <> " :meaning " <> renderJson meaning <> " :topic " <> renderJson topic <> "}"
 
 renderJson :: (ToJSON a) => a -> Text
 renderJson = decodeUtf8 <$> encode
