@@ -26,6 +26,7 @@ source-repository head
 executable download
   main-is: Download.hs
   other-modules:
+      Path
       Sense
       Paths_sense
   autogen-modules:
@@ -84,6 +85,7 @@ executable sense
   main-is: Sense.hs
   other-modules:
       Download
+      Path
       Paths_sense
   autogen-modules:
       Paths_sense
@@ -142,6 +144,7 @@ test-suite spec
   main-is: Spec.hs
   other-modules:
       Download
+      Path
       Sense
       Paths_sense
   autogen-modules:

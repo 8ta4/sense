@@ -6,8 +6,9 @@ import Crypto.Hash.SHA256 (hashlazy)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Lens (key, values, _JSON)
 import Data.ByteString.Base16 qualified as Base16
+import Path (getMeanPath, getStatePath, getWiktextractPath)
 import Relude
-import System.Directory (createDirectoryIfMissing, getHomeDirectory)
+import System.Directory (createDirectoryIfMissing)
 import System.FilePath (takeFileName, (</>))
 import System.Process (callProcess)
 
@@ -19,12 +20,11 @@ data Part = Part
 
 main :: IO ()
 main = do
-  home <- getHomeDirectory
-  let statePath = home </> ".local/state/sense"
-      partsPath = statePath </> "parts"
-      meanPath = statePath </> toString meanFilename
+  statePath <- getStatePath
+  meanPath <- getMeanPath
+  wiktextractPath <- getWiktextractPath
+  let partsPath = statePath </> "parts"
       manifestPath = statePath </> toString manifestFilename
-      extractedPath = statePath </> "raw-wiktextract-data.jsonl"
       downloadPart part = do
         let partPath = partsPath </> takeFileName part.url
         callProcess "wget" ["-cO", partPath, part.url]
@@ -39,7 +39,7 @@ main = do
   manifestContent <- readFileLBS manifestPath
   let parts :: [Part] = manifestContent ^.. key "parts" . values . _JSON
   partContents <- traverse downloadPart parts
-  writeFileLBS extractedPath $ decompress $ fold partContents
+  writeFileLBS wiktextractPath $ decompress $ fold partContents
 
 meanUrl :: String
 meanUrl = toString $ baseUrl <> meanFilename
