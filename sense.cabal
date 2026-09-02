@@ -26,6 +26,7 @@ source-repository head
 executable download
   main-is: Download.hs
   other-modules:
+      Path
       Sense
       Paths_sense
   autogen-modules:
@@ -74,6 +75,7 @@ executable download
     , filepath
     , lens
     , lens-aeson
+    , optparse-applicative
     , process
     , relude
     , req
@@ -84,6 +86,7 @@ executable sense
   main-is: Sense.hs
   other-modules:
       Download
+      Path
       Paths_sense
   autogen-modules:
       Paths_sense
@@ -131,6 +134,7 @@ executable sense
     , filepath
     , lens
     , lens-aeson
+    , optparse-applicative
     , process
     , relude
     , req
@@ -142,6 +146,7 @@ test-suite spec
   main-is: Spec.hs
   other-modules:
       Download
+      Path
       Sense
       Paths_sense
   autogen-modules:
@@ -191,6 +196,7 @@ test-suite spec
     , filepath
     , lens
     , lens-aeson
+    , optparse-applicative
     , process
     , relude
     , req
