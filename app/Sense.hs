@@ -1,6 +1,6 @@
 module Sense where
 
-import Data.Aeson (KeyValue ((.=)), ToJSON, Value, encode, object)
+import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decodeFileStrict, encode, object)
 import Data.Aeson.Key (fromText)
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
 import Options.Applicative (execParser, helper, strArgument)
@@ -16,6 +16,10 @@ main = do
   let meanPath = statePath </> toString meanFilename
   wiktextractPath <- getWiktextractPath
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
+  maybeMeaningScores <- decodeFileStrict meanPath
+  case maybeMeaningScores of
+    Just (meaningScores :: Map Text (Map Text Double)) -> pure ()
+    _ -> pure ()
   pure ()
 
 loadApiKeyHeader :: IO (Option 'Https)
