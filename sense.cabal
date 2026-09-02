@@ -68,6 +68,8 @@ executable download
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base16-bytestring
+    , cryptohash
     , directory
     , filepath
     , lens
@@ -121,6 +123,8 @@ executable sense
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base16-bytestring
+    , cryptohash
     , directory
     , filepath
     , lens
@@ -177,6 +181,8 @@ test-suite spec
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base16-bytestring
+    , cryptohash
     , directory
     , filepath
     , lens

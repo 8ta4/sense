@@ -1,15 +1,17 @@
 module Download where
 
 import Control.Lens ((^..))
+import Crypto.Hash.SHA256 (hashlazy)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Lens (key, values, _JSON)
+import Data.ByteString.Base16 qualified as Base16
 import Relude
 import System.Directory (createDirectoryIfMissing, getHomeDirectory)
-import System.FilePath ((</>))
+import System.FilePath (takeFileName, (</>))
 import System.Process (callProcess)
 
 data Part = Part
-  { url :: !Text,
+  { url :: !String,
     hash :: !Text
   }
   deriving (Show, ToJSON, FromJSON, Generic)
@@ -21,10 +23,18 @@ main = do
       partsPath = statePath </> "parts"
       manifestPath = statePath </> "manifest.json"
       extractedPath = statePath </> "raw-wiktextract-data.jsonl"
+      downloadPart part = do
+        let partPath = partsPath </> takeFileName part.url
+        callProcess "wget" ["-cO", partPath, part.url]
+        partContent <- readFileLBS partPath
+        if part.hash == (decodeUtf8 $ Base16.encode $ hashlazy partContent)
+          then pure partContent
+          else error "Checksum verification failed"
   createDirectoryIfMissing True partsPath
   callProcess "wget" ["-O", manifestPath, manifestUrl]
-  content <- readFileLBS manifestPath
-  let parts :: [Part] = content ^.. key "parts" . values . _JSON
+  manifestContent <- readFileLBS manifestPath
+  let parts :: [Part] = manifestContent ^.. key "parts" . values . _JSON
+  partContents <- traverse downloadPart parts
   pure ()
 
 manifestUrl :: String
