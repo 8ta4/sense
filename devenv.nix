@@ -42,7 +42,7 @@
   # The trade-off is that the initial module load is not checked for this specific warning.
   scripts.watch-download.exec = ''
     ghcid -a \
-    -c 'stack ghci --ghci-options "-ghci-script download.ghci" --no-load' \
+    -c 'stack ghci --ghci-options "-ghci-script ghci/download.ghci" --no-load' \
     --no-height-limit \
     -r \
     -s ':set -Wprepositive-qualified-module' \
@@ -50,7 +50,7 @@
   '';
   scripts.watch-sense.exec = ''
     ghcid -a \
-    -c 'stack ghci' \
+    -c 'stack ghci --ghci-options "-ghci-script ghci/sense.ghci" --no-load' \
     --no-height-limit \
     -r \
     -s ":set args fat" \
