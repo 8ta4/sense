@@ -1,5 +1,6 @@
 module Download where
 
+import Codec.Compression.GZip (decompress)
 import Control.Lens ((^..))
 import Crypto.Hash.SHA256 (hashlazy)
 import Data.Aeson (FromJSON, ToJSON)
@@ -35,7 +36,7 @@ main = do
   manifestContent <- readFileLBS manifestPath
   let parts :: [Part] = manifestContent ^.. key "parts" . values . _JSON
   partContents <- traverse downloadPart parts
-  pure ()
+  writeFileLBS extractedPath $ decompress $ fold partContents
 
 manifestUrl :: String
 manifestUrl = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/manifest.json"
