@@ -38,6 +38,14 @@ Evaluating every meaning in Wiktionary would cost too much.
 
 - The meaning is tagged as `idiomatic`, or the phrase has another meaning that 50% or more of Americans aged 10 or older are thought to know.
 
+> Does `sense` evaluate meanings that are not in Wiktionary?
+
+Yes.
+
+Wiktionary often tags a phrase's meaning as `idiomatic`. Wiktionary occasionally lists a meaning that starts with `Used other than figuratively or idiomatically`, though it can omit that part.
+
+These jokes often contrast an idiom with its literal reading. When a phrase has an idiomatic meaning that's thought to be known by at least half of Americans aged 10 or older, `sense` makes sure a literal counterpart is evaluated. If a phrase already has a meaning that begins with `Used other than figuratively or idiomatically`, then `sense` just evaluates that meaning. If Wiktionary doesn't have a meaning that starts with `Used other than figuratively or idiomatically`, `sense` tacks on `Used other than figuratively or idiomatically` for evaluation.
+
 ### Budget
 
 > What is the target monthly budget?

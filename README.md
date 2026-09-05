@@ -60,6 +60,10 @@ If you use the `-i` flag, `sense` will only run idioms.
 sense -i fat
 ```
 
+If you use the `-i` flag, `sense` spits out `<topic>.idioms.tsv` and `<topic>.idioms.json` instead of `<topic>.tsv` and `<topic>.json`.
+
+Using different file names stops you from confusing an idiom-only run with a full vocabulary run.
+
 Checking the whole vocabulary:
 
 - costs a lot.
