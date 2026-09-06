@@ -8,7 +8,7 @@ import Data.Aeson.Lens (key, values, _Array, _String)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.Map qualified as Map
 import Data.Text qualified as Text
-import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
+import Network.HTTP.Req (Option, POST (POST), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, req, runReq, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
@@ -62,6 +62,14 @@ main = do
                     <> header "X-Goog-Upload-Command" "start"
                     <> header "X-Goog-Upload-Header-Content-Length" (show fileSize)
                     <> header "X-Goog-Upload-Header-Content-Type" "application/json"
+            initialResponse <-
+              runReq defaultHttpConfig
+                $ req
+                  POST
+                  (host /: "upload" /: "v1beta" /: "files")
+                  (ReqBodyJson $ object [])
+                  ignoreResponse
+                  initialHeaders
             pure ()
       ensureSubmitted
     _ -> pure ()
