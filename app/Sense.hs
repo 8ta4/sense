@@ -7,7 +7,7 @@ import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
-import System.Directory (getHomeDirectory)
+import System.Directory (getHomeDirectory, getTemporaryDirectory)
 import System.FilePath ((</>))
 
 main :: IO ()
@@ -15,11 +15,15 @@ main = do
   statePath <- getStatePath
   let meanPath = statePath </> toString meanFilename
   wiktextractPath <- getWiktextractPath
+  temporaryDirectory <- getTemporaryDirectory
+  let inputPath = temporaryDirectory </> "input.jsonl"
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   let ensureSubmitted = do
         maybeMeaningScores <- decodeFileStrict meanPath
         case maybeMeaningScores of
-          Just (meaningScores :: Map Text (Map Text Double)) -> pure ()
+          Just (meaningScores :: Map Text (Map Text Double)) -> do
+            content <- readFileLBS wiktextractPath
+            pure ()
           _ -> pure ()
   ensureSubmitted
 
