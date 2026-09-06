@@ -7,6 +7,7 @@ import Data.Aeson.Key (fromText)
 import Data.Aeson.Lens (key, values, _Array, _String)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.Map qualified as Map
+import Data.Text qualified as Text
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
@@ -29,18 +30,21 @@ main = do
       let processEntry entry = fromMaybe [] $ do
             phrase <- entry ^? key "word" . _String
             meaningScores <- Map.lookup phrase meanScores
+            let senses = entry ^.. key "senses" . values
             pure
               $ (phrase,)
               <$> ( mapMaybe extractMeaning
                       $ filter
-                        ( \sense -> fromMaybe False $ do
-                            meaning <- extractMeaning sense
-                            score <- Map.lookup meaning meaningScores
-                            pure $ score >= 50 && (Map.size (Map.filter (>= 50) meaningScores) > 1 || isIdiomatic sense)
+                        ( \sense ->
+                            isKnown meaningScores sense
+                              && ( Map.size (Map.filter isKnown' meaningScores)
+                                     > 1
+                                     || isIdiomatic sense
+                                 )
+                              || any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
+                              && isLiteral sense
                         )
-                      $ entry
-                      ^.. key "senses"
-                        . values
+                      $ senses
                   )
           ensureSubmitted = do
             content <- readFileLBS wiktextractPath
@@ -48,6 +52,20 @@ main = do
             pure ()
       ensureSubmitted
     _ -> pure ()
+
+isKnown' :: Double -> Bool
+isKnown' = (>= 50)
+
+isKnown :: Map Text Double -> Value -> Bool
+isKnown scores sense = fromMaybe False $ do
+  meaning <- extractMeaning sense
+  score <- Map.lookup meaning scores
+  pure $ isKnown' score
+
+isLiteral :: Value -> Bool
+isLiteral sense = fromMaybe False $ do
+  meaning <- extractMeaning sense
+  pure $ Text.isPrefixOf "Used other than figuratively or idiomatically" meaning
 
 extractMeaning :: Value -> Maybe Text
 extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
