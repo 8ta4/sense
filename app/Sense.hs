@@ -16,11 +16,12 @@ main = do
   let meanPath = statePath </> toString meanFilename
   wiktextractPath <- getWiktextractPath
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
-  maybeMeaningScores <- decodeFileStrict meanPath
-  case maybeMeaningScores of
-    Just (meaningScores :: Map Text (Map Text Double)) -> pure ()
-    _ -> pure ()
-  pure ()
+  let ensureSubmitted = do
+        maybeMeaningScores <- decodeFileStrict meanPath
+        case maybeMeaningScores of
+          Just (meaningScores :: Map Text (Map Text Double)) -> pure ()
+          _ -> pure ()
+  ensureSubmitted
 
 loadApiKeyHeader :: IO (Option 'Https)
 loadApiKeyHeader = do
