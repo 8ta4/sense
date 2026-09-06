@@ -143,51 +143,6 @@ main = do
       ensureDownloaded
     _ -> pure ()
 
-parseResult :: LazyByteString -> Maybe Entry
-parseResult line = do
-  scores <-
-    line
-      ^? key "response"
-        . key "candidates"
-        . nth 0
-        . key "content"
-        . key "parts"
-        . nth 0
-        . key "text"
-        . _String
-        . to decodeStrictText
-        . _Just
-  keyPair <- line ^? key "key" . _String . to decodeStrictText . _Just
-  targetScore <- lookup (keyPair !! 0) scores
-  benchmarkScore <- lookup benchmarkPhrase scores
-  pure
-    $ Entry
-      { phrase = keyPair !! 0,
-        meaning = keyPair !! 1,
-        benchmarkScore,
-        targetScore
-      }
-
-insertScore :: RawScores -> Entry -> RawScores
-insertScore xs Entry {phrase, meaning, benchmarkScore, targetScore} = insertWith union phrase (singleton meaning (benchmarkScore, targetScore)) xs
-
-poll :: Req (JsonResponse Value) -> IO (Maybe Text)
-poll request = do
-  response <- runReq defaultHttpConfig request
-  case (responseBody response) ^? key "metadata" . key "state" . _String of
-    Just "BATCH_STATE_SUCCEEDED" ->
-      pure
-        $ (!! 1)
-        <$> (splitOn "/")
-        <$> (responseBody response)
-        ^? key "response"
-          . key "responsesFile"
-          . _String
-    Just "BATCH_STATE_RUNNING" -> liftIO $ do
-      threadDelay 10000000
-      poll request
-    _ -> pure Nothing
-
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
 
@@ -340,3 +295,48 @@ literalPrefix = "Used other than figuratively or idiomatically"
 
 extractMeaning :: Value -> Maybe Text
 extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
+
+poll :: Req (JsonResponse Value) -> IO (Maybe Text)
+poll request = do
+  response <- runReq defaultHttpConfig request
+  case (responseBody response) ^? key "metadata" . key "state" . _String of
+    Just "BATCH_STATE_SUCCEEDED" ->
+      pure
+        $ (!! 1)
+        <$> (splitOn "/")
+        <$> (responseBody response)
+        ^? key "response"
+          . key "responsesFile"
+          . _String
+    Just "BATCH_STATE_RUNNING" -> liftIO $ do
+      threadDelay 10000000
+      poll request
+    _ -> pure Nothing
+
+parseResult :: LazyByteString -> Maybe Entry
+parseResult line = do
+  scores <-
+    line
+      ^? key "response"
+        . key "candidates"
+        . nth 0
+        . key "content"
+        . key "parts"
+        . nth 0
+        . key "text"
+        . _String
+        . to decodeStrictText
+        . _Just
+  keyPair <- line ^? key "key" . _String . to decodeStrictText . _Just
+  targetScore <- lookup (keyPair !! 0) scores
+  benchmarkScore <- lookup benchmarkPhrase scores
+  pure
+    $ Entry
+      { phrase = keyPair !! 0,
+        meaning = keyPair !! 1,
+        benchmarkScore,
+        targetScore
+      }
+
+insertScore :: RawScores -> Entry -> RawScores
+insertScore xs Entry {phrase, meaning, benchmarkScore, targetScore} = insertWith union phrase (singleton meaning (benchmarkScore, targetScore)) xs
