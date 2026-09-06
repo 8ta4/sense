@@ -6,9 +6,11 @@ import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, enc
 import Data.Aeson.Key (fromText)
 import Data.Aeson.Lens (key, values, _Array, _String)
 import Data.ByteString.Lazy.Char8 qualified as Char8
+import Data.List ((!!))
 import Data.Map qualified as Map
+import Data.Text (splitOn)
 import Data.Text qualified as Text
-import Network.HTTP.Req (Option, POST (POST), ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, req, responseBody, responseHeader, runReq, useHttpsURI, (/:))
+import Network.HTTP.Req (HttpConfig (httpConfigRetryPolicy), Option, POST (POST), ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
@@ -21,6 +23,7 @@ main :: IO ()
 main = do
   statePath <- getStatePath
   let meanPath = statePath </> toString meanFilename
+      batchIdPath = statePath </> "id"
   wiktextractPath <- getWiktextractPath
   temporaryDirectory <- getTemporaryDirectory
   let inputPath = temporaryDirectory </> "input.jsonl"
@@ -89,12 +92,39 @@ main = do
                               <> uploadOptions
                           )
                     case (responseBody uploadResponse :: Value) ^? key "file" . key "name" . _String of
-                      Just filename -> pure ()
+                      Just filename -> do
+                        batchResponse <-
+                          -- Disabling retries prevents submitting multiple batches and getting charged multiple times.
+                          runReq (defaultHttpConfig {httpConfigRetryPolicy = mempty})
+                            $ req
+                              POST
+                              batchUrl
+                              (ReqBodyJson $ makeBatchPayload filename)
+                              jsonResponse
+                              -- The API may take 30+ seconds to respond when submitting a batch request.
+                              (apiKeyHeader <> responseTimeout timeout)
+                        case (responseBody batchResponse :: Value) ^? key "name" . _String of
+                          Just batchName -> writeFileText batchIdPath $ (splitOn "/" batchName) !! 1
+                          _ -> pure ()
                       _ -> pure ()
                   _ -> pure ()
               _ -> pure ()
       ensureSubmitted
     _ -> pure ()
+
+makeBatchPayload :: Text -> Value
+makeBatchPayload filename =
+  object
+    [ "batch"
+        .= object
+          [ "input_config"
+              .= object
+                ["file_name" .= filename]
+          ]
+    ]
+
+timeout :: Int
+timeout = 24 * 60 * 60 * 10 ^ (6 :: Int)
 
 makeBatchLine :: Text -> (Text, Text) -> Char8.ByteString
 makeBatchLine topic (phrase, meaning) =
@@ -222,6 +252,9 @@ percentageSchema =
 
 systemPrompt :: Text
 systemPrompt = "Estimate the percentage of Americans 10 years or older who consider each meaning on topic."
+
+batchUrl :: Url 'Https
+batchUrl = baseUrl /: "models" /: model <> ":batchGenerateContent"
 
 baseUrl :: Url 'Https
 baseUrl = host /: "v1beta"
