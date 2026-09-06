@@ -53,7 +53,7 @@ main = do
                   )
           ensureSubmitted = do
             content <- readFileLBS wiktextractPath
-            let _ = (filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry
+            let _ = ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
             pure ()
       ensureSubmitted
     _ -> pure ()
