@@ -31,9 +31,14 @@ main = do
             phrase <- entry ^? key "word" . _String
             meaningScores <- Map.lookup phrase meanScores
             let senses = entry ^.. key "senses" . values
+                hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
             pure
               $ (phrase,)
-              <$> ( mapMaybe extractMeaning
+              <$> ( ( if hasKnownIdiom && not (any isLiteral senses)
+                        then (syntheticLiteral :)
+                        else id
+                    )
+                      $ mapMaybe extractMeaning
                       $ filter
                         ( \sense ->
                             isKnown meaningScores sense
@@ -41,7 +46,7 @@ main = do
                                      > 1
                                      || isIdiomatic sense
                                  )
-                              || any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
+                              || hasKnownIdiom
                               && isLiteral sense
                         )
                       $ senses
@@ -65,7 +70,13 @@ isKnown scores sense = fromMaybe False $ do
 isLiteral :: Value -> Bool
 isLiteral sense = fromMaybe False $ do
   meaning <- extractMeaning sense
-  pure $ Text.isPrefixOf "Used other than figuratively or idiomatically" meaning
+  pure $ Text.isPrefixOf literalPrefix meaning
+
+syntheticLiteral :: Text
+syntheticLiteral = literalPrefix <> "."
+
+literalPrefix :: Text
+literalPrefix = "Used other than figuratively or idiomatically"
 
 extractMeaning :: Value -> Maybe Text
 extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
