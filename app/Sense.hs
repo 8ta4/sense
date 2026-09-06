@@ -11,7 +11,7 @@ import Data.List ((!!))
 import Data.Map qualified as Map
 import Data.Text (splitOn)
 import Data.Text qualified as Text
-import Network.HTTP.Req (GET (GET), HttpConfig (httpConfigRetryPolicy), JsonResponse, NoReqBody (NoReqBody), Option, POST (POST), Req, ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:))
+import Network.HTTP.Req (GET (GET), HttpConfig (httpConfigRetryPolicy), JsonResponse, NoReqBody (NoReqBody), Option, POST (POST), Req, ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, lbsResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:), (=:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
@@ -111,12 +111,23 @@ main = do
                         )
                       $ senses
                   )
-
           ensureDownloaded = do
             batchId <- readFileBS batchIdPath
             maybeResponsesFile <- poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
-            pure ()
+            case maybeResponsesFile of
+              Just responsesFile -> do
+                downloadResponse <-
+                  runReq defaultHttpConfig
+                    $ req
+                      GET
+                      (host /: "download" /: "v1beta" /: "files" /: (responsesFile <> ":download"))
+                      NoReqBody
+                      lbsResponse
+                      (apiKeyHeader <> "alt" =: ("media" :: Text))
+                pure ()
+              _ -> pure ()
       ensureSubmitted
+      ensureDownloaded
     _ -> pure ()
 
 poll :: Req (JsonResponse Value) -> IO (Maybe Text)
