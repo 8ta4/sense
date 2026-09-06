@@ -23,24 +23,22 @@ main = do
   temporaryDirectory <- getTemporaryDirectory
   let inputPath = temporaryDirectory </> "input.jsonl"
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
-  let ensureSubmitted = do
-        maybeMeanScores <- decodeFileStrict meanPath
-        case maybeMeanScores of
-          Just meanScores -> do
+  maybeMeanScores <- decodeFileStrict meanPath
+  case maybeMeanScores of
+    Just (meanScores :: Map Text (Map Text Double)) -> do
+      let processEntry entry = case entry ^? key "word" . _String of
+            Just phrase ->
+              (phrase,)
+                <$> case Map.lookup phrase meanScores of
+                  Just meaningScores -> mapMaybe extractMeaning $ entry ^.. key "senses" . values
+                  _ -> []
+            _ -> []
+          ensureSubmitted = do
             content <- readFileLBS wiktextractPath
-            let _ = (filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry meanScores
+            let _ = (filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry
             pure ()
-          _ -> pure ()
-  ensureSubmitted
-
-processEntry :: Map Text (Map Text Double) -> Value -> [(Text, Text)]
-processEntry meanScores entry = case entry ^? key "word" . _String of
-  Just phrase ->
-    (phrase,)
-      <$> case Map.lookup phrase meanScores of
-        Just meaningScores -> mapMaybe extractMeaning $ entry ^.. key "senses" . values
-        _ -> []
-  _ -> []
+      ensureSubmitted
+    _ -> pure ()
 
 extractMeaning :: Value -> Maybe Text
 extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
