@@ -15,7 +15,7 @@ import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
-import System.Directory (getFileSize, getHomeDirectory, getTemporaryDirectory)
+import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory)
 import System.FilePath ((</>))
 import Text.URI (mkURI)
 
@@ -24,6 +24,7 @@ main = do
   statePath <- getStatePath
   let meanPath = statePath </> toString meanFilename
       batchIdPath = statePath </> "id"
+  batchExists <- doesFileExist batchIdPath
   wiktextractPath <- getWiktextractPath
   temporaryDirectory <- getTemporaryDirectory
   let inputPath = temporaryDirectory </> "input.jsonl"
@@ -32,7 +33,7 @@ main = do
   maybeMeanScores <- decodeFileStrict meanPath
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
-      let ensureSubmitted = do
+      let ensureSubmitted = unless batchExists $ do
             content <- readFileLBS wiktextractPath
             writeFileLBS inputPath $ Char8.unlines $ makeBatchLine targetTopic <$> ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
             fileSize <- getFileSize inputPath
