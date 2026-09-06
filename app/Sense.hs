@@ -1,14 +1,17 @@
 module Sense where
 
 import Control.Concurrent (threadDelay)
-import Control.Lens ((^..), (^?))
+import Control.Lens (to, (^..), (^?))
 import Control.Lens.Cons (_last)
-import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, encode, object)
+import Control.Lens.Prism (_Just)
+import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, decodeStrictText, encode, object)
 import Data.Aeson.Key (fromText)
-import Data.Aeson.Lens (key, values, _Array, _String)
+import Data.Aeson.Lens (key, nth, values, _Array, _String)
+import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.List ((!!))
 import Data.Map qualified as Map
+import Data.Map.Lazy (insertWith, lookup, singleton, union)
 import Data.Text (splitOn)
 import Data.Text qualified as Text
 import Network.HTTP.Req (GET (GET), HttpConfig (httpConfigRetryPolicy), JsonResponse, NoReqBody (NoReqBody), Option, POST (POST), Req, ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, lbsResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:), (=:))
@@ -19,6 +22,15 @@ import Relude
 import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory)
 import System.FilePath ((</>))
 import Text.URI (mkURI)
+
+type RawScores = Map Text (Map Text (Double, Double))
+
+data Entry = Entry
+  { phrase :: !Text,
+    meaning :: !Text,
+    benchmarkScore :: !Double,
+    targetScore :: !Double
+  }
 
 main :: IO ()
 main = do
@@ -32,7 +44,7 @@ main = do
   let inputPath = temporaryDirectory </> "input.jsonl"
   apiKeyHeader <- loadApiKeyHeader
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
-  let rawPath = statePath </> toString (targetTopic <> ".json")
+  let rawPath = toString (targetTopic <> ".json")
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
       let ensureSubmitted = unless batchExists $ do
@@ -125,11 +137,39 @@ main = do
                       NoReqBody
                       lbsResponse
                       (apiKeyHeader <> "alt" =: ("media" :: Text))
-                pure ()
+                writeFileLBS rawPath $ encode $ foldl' insertScore Map.empty $ mapMaybe parseResult $ Char8.lines $ responseBody downloadResponse
               _ -> pure ()
       ensureSubmitted
       ensureDownloaded
     _ -> pure ()
+
+parseResult :: LazyByteString -> Maybe Entry
+parseResult line = do
+  scores <-
+    line
+      ^? key "response"
+        . key "candidates"
+        . nth 0
+        . key "content"
+        . key "parts"
+        . nth 0
+        . key "text"
+        . _String
+        . to decodeStrictText
+        . _Just
+  keyPair <- line ^? key "key" . _String . to decodeStrictText . _Just
+  targetScore <- lookup (keyPair !! 0) scores
+  benchmarkScore <- lookup benchmarkPhrase scores
+  pure
+    $ Entry
+      { phrase = keyPair !! 0,
+        meaning = keyPair !! 1,
+        benchmarkScore,
+        targetScore
+      }
+
+insertScore :: RawScores -> Entry -> RawScores
+insertScore xs Entry {phrase, meaning, benchmarkScore, targetScore} = insertWith union phrase (singleton meaning (benchmarkScore, targetScore)) xs
 
 poll :: Req (JsonResponse Value) -> IO (Maybe Text)
 poll request = do
