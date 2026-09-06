@@ -36,16 +36,7 @@ main = do
                         ( \sense -> fromMaybe False $ do
                             meaning <- extractMeaning sense
                             score <- Map.lookup meaning meaningScores
-                            pure
-                              $ score
-                              >= 50
-                              && ( (Map.size (Map.filter (>= 50) meaningScores) > 1)
-                                     || ( elem "idiomatic" $ sense
-                                            ^.. key "tags"
-                                              . values
-                                              . _String
-                                        )
-                                 )
+                            pure $ score >= 50 && (Map.size (Map.filter (>= 50) meaningScores) > 1 || isIdiomatic sense)
                         )
                       $ entry
                       ^.. key "senses"
@@ -60,6 +51,9 @@ main = do
 
 extractMeaning :: Value -> Maybe Text
 extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
+
+isIdiomatic :: Value -> Bool
+isIdiomatic sense = elem "idiomatic" $ sense ^.. key "tags" . values . _String
 
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
