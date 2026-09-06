@@ -25,13 +25,13 @@ main = do
   statePath <- getStatePath
   let meanPath = statePath </> toString meanFilename
       batchIdPath = statePath </> "id"
+  maybeMeanScores <- decodeFileStrict meanPath
   batchExists <- doesFileExist batchIdPath
   wiktextractPath <- getWiktextractPath
   temporaryDirectory <- getTemporaryDirectory
   let inputPath = temporaryDirectory </> "input.jsonl"
-  targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   apiKeyHeader <- loadApiKeyHeader
-  maybeMeanScores <- decodeFileStrict meanPath
+  targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
       let ensureSubmitted = unless batchExists $ do
