@@ -35,7 +35,7 @@ main = do
                               meaningScores <- Map.lookup phrase meanScores
                               meaning <- extractMeaning sense
                               score <- Map.lookup meaning meaningScores
-                              pure $ score >= 50
+                              pure $ score >= 50 && (Map.size (Map.filter (>= 50) meaningScores) > 1)
                           )
                         $ entry
                         ^.. key "senses"
