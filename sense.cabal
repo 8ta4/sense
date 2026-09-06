@@ -71,6 +71,7 @@ executable download
     , base >=4.7 && <5
     , base16-bytestring
     , bytestring
+    , containers
     , cryptohash
     , directory
     , filepath
@@ -131,6 +132,7 @@ executable sense
     , base >=4.7 && <5
     , base16-bytestring
     , bytestring
+    , containers
     , cryptohash
     , directory
     , filepath
@@ -194,6 +196,7 @@ test-suite spec
     , base >=4.7 && <5
     , base16-bytestring
     , bytestring
+    , containers
     , cryptohash
     , directory
     , filepath

@@ -5,6 +5,7 @@ import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, enc
 import Data.Aeson.Key (fromText)
 import Data.Aeson.Lens (key, _String)
 import Data.ByteString.Lazy.Char8 qualified as Char8
+import Data.Map qualified as Map
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
@@ -35,7 +36,9 @@ processEntry :: Map Text (Map Text Double) -> Value -> [(Text, Text)]
 processEntry meanScores entry = case entry ^? key "word" . _String of
   Just phrase ->
     (phrase,)
-      <$> []
+      <$> case Map.lookup phrase meanScores of
+        Just meaningScores -> []
+        _ -> []
   _ -> []
 
 isTarget :: Value -> Bool
