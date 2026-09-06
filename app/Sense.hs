@@ -29,14 +29,18 @@ main = do
       let processEntry entry = case entry ^? key "word" . _String of
             Just phrase ->
               (phrase,)
-                <$> case Map.lookup phrase meanScores of
-                  Just meaningScores ->
-                    mapMaybe extractMeaning
-                      $ filter (\sense -> True)
-                      $ entry
-                      ^.. key "senses"
-                        . values
-                  _ -> []
+                <$> ( mapMaybe extractMeaning
+                        $ filter
+                          ( \sense -> fromMaybe False $ do
+                              meaningScores <- Map.lookup phrase meanScores
+                              meaning <- extractMeaning sense
+                              score <- Map.lookup meaning meaningScores
+                              pure $ score >= 50
+                          )
+                        $ entry
+                        ^.. key "senses"
+                          . values
+                    )
             _ -> []
           ensureSubmitted = do
             content <- readFileLBS wiktextractPath
