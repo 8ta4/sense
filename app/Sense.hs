@@ -30,7 +30,12 @@ main = do
             Just phrase ->
               (phrase,)
                 <$> case Map.lookup phrase meanScores of
-                  Just meaningScores -> mapMaybe extractMeaning $ entry ^.. key "senses" . values
+                  Just meaningScores ->
+                    mapMaybe extractMeaning
+                      $ filter (\sense -> True)
+                      $ entry
+                      ^.. key "senses"
+                        . values
                   _ -> []
             _ -> []
           ensureSubmitted = do
