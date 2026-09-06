@@ -13,7 +13,7 @@ import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
-import System.Directory (getHomeDirectory, getTemporaryDirectory)
+import System.Directory (getFileSize, getHomeDirectory, getTemporaryDirectory)
 import System.FilePath ((</>))
 
 main :: IO ()
@@ -24,6 +24,7 @@ main = do
   temporaryDirectory <- getTemporaryDirectory
   let inputPath = temporaryDirectory </> "input.jsonl"
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
+  apiKeyHeader <- loadApiKeyHeader
   maybeMeanScores <- decodeFileStrict meanPath
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
@@ -54,6 +55,13 @@ main = do
           ensureSubmitted = do
             content <- readFileLBS wiktextractPath
             writeFileLBS inputPath $ Char8.unlines $ makeBatchLine targetTopic <$> ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
+            fileSize <- getFileSize inputPath
+            let initialHeaders =
+                  apiKeyHeader
+                    <> header "X-Goog-Upload-Protocol" "resumable"
+                    <> header "X-Goog-Upload-Command" "start"
+                    <> header "X-Goog-Upload-Header-Content-Length" (show fileSize)
+                    <> header "X-Goog-Upload-Header-Content-Type" "application/json"
             pure ()
       ensureSubmitted
     _ -> pure ()
