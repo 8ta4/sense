@@ -1,9 +1,10 @@
 module Sense where
 
-import Control.Lens ((^?))
+import Control.Lens ((^..), (^?))
+import Control.Lens.Cons (_last)
 import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, encode, object)
 import Data.Aeson.Key (fromText)
-import Data.Aeson.Lens (key, _String)
+import Data.Aeson.Lens (key, values, _Array, _String)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.Map qualified as Map
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
@@ -37,9 +38,12 @@ processEntry meanScores entry = case entry ^? key "word" . _String of
   Just phrase ->
     (phrase,)
       <$> case Map.lookup phrase meanScores of
-        Just meaningScores -> []
+        Just meaningScores -> mapMaybe extractMeaning $ entry ^.. key "senses" . values
         _ -> []
   _ -> []
+
+extractMeaning :: Value -> Maybe Text
+extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
 
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
