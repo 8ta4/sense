@@ -32,6 +32,7 @@ main = do
   let inputPath = temporaryDirectory </> "input.jsonl"
   apiKeyHeader <- loadApiKeyHeader
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
+  let rawPath = statePath </> toString (targetTopic <> ".json")
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
       let ensureSubmitted = unless batchExists $ do
