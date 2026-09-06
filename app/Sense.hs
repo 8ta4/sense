@@ -32,31 +32,7 @@ main = do
   maybeMeanScores <- decodeFileStrict meanPath
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
-      let processEntry entry = fromMaybe [] $ do
-            phrase <- entry ^? key "word" . _String
-            meaningScores <- Map.lookup phrase meanScores
-            let senses = entry ^.. key "senses" . values
-                hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
-            pure
-              $ (phrase,)
-              <$> ( ( if hasKnownIdiom && not (any isLiteral senses)
-                        then (syntheticLiteral :)
-                        else id
-                    )
-                      $ mapMaybe extractMeaning
-                      $ filter
-                        ( \sense ->
-                            isKnown meaningScores sense
-                              && ( Map.size (Map.filter isKnown' meaningScores)
-                                     > 1
-                                     || isIdiomatic sense
-                                 )
-                              || hasKnownIdiom
-                              && isLiteral sense
-                        )
-                      $ senses
-                  )
-          ensureSubmitted = do
+      let ensureSubmitted = do
             content <- readFileLBS wiktextractPath
             writeFileLBS inputPath $ Char8.unlines $ makeBatchLine targetTopic <$> ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
             fileSize <- getFileSize inputPath
@@ -109,56 +85,32 @@ main = do
                       _ -> pure ()
                   _ -> pure ()
               _ -> pure ()
+          processEntry entry = fromMaybe [] $ do
+            phrase <- entry ^? key "word" . _String
+            meaningScores <- Map.lookup phrase meanScores
+            let senses = entry ^.. key "senses" . values
+                hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
+            pure
+              $ (phrase,)
+              <$> ( ( if hasKnownIdiom && not (any isLiteral senses)
+                        then (syntheticLiteral :)
+                        else id
+                    )
+                      $ mapMaybe extractMeaning
+                      $ filter
+                        ( \sense ->
+                            isKnown meaningScores sense
+                              && ( Map.size (Map.filter isKnown' meaningScores)
+                                     > 1
+                                     || isIdiomatic sense
+                                 )
+                              || hasKnownIdiom
+                              && isLiteral sense
+                        )
+                      $ senses
+                  )
       ensureSubmitted
     _ -> pure ()
-
-makeBatchPayload :: Text -> Value
-makeBatchPayload filename =
-  object
-    [ "batch"
-        .= object
-          [ "input_config"
-              .= object
-                ["file_name" .= filename]
-          ]
-    ]
-
-timeout :: Int
-timeout = 24 * 60 * 60 * 10 ^ (6 :: Int)
-
-makeBatchLine :: Text -> (Text, Text) -> Char8.ByteString
-makeBatchLine topic (phrase, meaning) =
-  encode
-    $ object
-      [ "key" .= renderJson [phrase, meaning],
-        "request" .= makeRequestPayload topic phrase meaning
-      ]
-
-isKnown' :: Double -> Bool
-isKnown' = (>= 50)
-
-isKnown :: Map Text Double -> Value -> Bool
-isKnown scores sense = fromMaybe False $ do
-  meaning <- extractMeaning sense
-  score <- Map.lookup meaning scores
-  pure $ isKnown' score
-
-isLiteral :: Value -> Bool
-isLiteral sense = fromMaybe False $ do
-  meaning <- extractMeaning sense
-  pure $ Text.isPrefixOf literalPrefix meaning
-
-syntheticLiteral :: Text
-syntheticLiteral = literalPrefix <> "."
-
-literalPrefix :: Text
-literalPrefix = "Used other than figuratively or idiomatically"
-
-extractMeaning :: Value -> Maybe Text
-extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
-
-isIdiomatic :: Value -> Bool
-isIdiomatic sense = elem "idiomatic" $ sense ^.. key "tags" . values . _String
 
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
@@ -264,3 +216,51 @@ host = https "generativelanguage.googleapis.com"
 
 model :: Text
 model = "gemini-3.6-flash"
+
+makeBatchPayload :: Text -> Value
+makeBatchPayload filename =
+  object
+    [ "batch"
+        .= object
+          [ "input_config"
+              .= object
+                ["file_name" .= filename]
+          ]
+    ]
+
+timeout :: Int
+timeout = 24 * 60 * 60 * 10 ^ (6 :: Int)
+
+makeBatchLine :: Text -> (Text, Text) -> Char8.ByteString
+makeBatchLine topic (phrase, meaning) =
+  encode
+    $ object
+      [ "key" .= renderJson [phrase, meaning],
+        "request" .= makeRequestPayload topic phrase meaning
+      ]
+
+isKnown :: Map Text Double -> Value -> Bool
+isKnown scores sense = fromMaybe False $ do
+  meaning <- extractMeaning sense
+  score <- Map.lookup meaning scores
+  pure $ isKnown' score
+
+isKnown' :: Double -> Bool
+isKnown' = (>= 50)
+
+isIdiomatic :: Value -> Bool
+isIdiomatic sense = elem "idiomatic" $ sense ^.. key "tags" . values . _String
+
+isLiteral :: Value -> Bool
+isLiteral sense = fromMaybe False $ do
+  meaning <- extractMeaning sense
+  pure $ Text.isPrefixOf literalPrefix meaning
+
+syntheticLiteral :: Text
+syntheticLiteral = literalPrefix <> "."
+
+literalPrefix :: Text
+literalPrefix = "Used other than figuratively or idiomatically"
+
+extractMeaning :: Value -> Maybe Text
+extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
