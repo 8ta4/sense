@@ -14,6 +14,9 @@
     pkgs.gitleaks
     pkgs.rubyPackages.solargraph
     pkgs.wget
+    # Provides 'zlib.h', which is required by the Haskell 'req' package via the 'zlib' library dependency.
+    # Without this, 'stack build' fails with: "fatal error: 'zlib.h' file not found".
+    pkgs.zlib
     pkgs.zstd
   ];
 

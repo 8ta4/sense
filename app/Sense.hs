@@ -1,13 +1,18 @@
 module Sense where
 
-import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decodeFileStrict, encode, object)
+import Control.Lens ((^..), (^?))
+import Control.Lens.Cons (_last)
+import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, encode, object)
 import Data.Aeson.Key (fromText)
+import Data.Aeson.Lens (key, values, _Array, _String)
+import Data.ByteString.Lazy.Char8 qualified as Char8
+import Data.Map qualified as Map
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
-import System.Directory (getHomeDirectory)
+import System.Directory (getHomeDirectory, getTemporaryDirectory)
 import System.FilePath ((</>))
 
 main :: IO ()
@@ -15,12 +20,62 @@ main = do
   statePath <- getStatePath
   let meanPath = statePath </> toString meanFilename
   wiktextractPath <- getWiktextractPath
+  temporaryDirectory <- getTemporaryDirectory
+  let inputPath = temporaryDirectory </> "input.jsonl"
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
-  maybeMeaningScores <- decodeFileStrict meanPath
-  case maybeMeaningScores of
-    Just (meaningScores :: Map Text (Map Text Double)) -> pure ()
+  maybeMeanScores <- decodeFileStrict meanPath
+  case maybeMeanScores of
+    Just (meanScores :: Map Text (Map Text Double)) -> do
+      let processEntry entry = case entry ^? key "word" . _String of
+            Just phrase ->
+              (phrase,)
+                <$> ( mapMaybe extractMeaning
+                        $ filter
+                          ( \sense -> fromMaybe False $ do
+                              meaningScores <- Map.lookup phrase meanScores
+                              meaning <- extractMeaning sense
+                              score <- Map.lookup meaning meaningScores
+                              pure
+                                $ score
+                                >= 50
+                                && ( (Map.size (Map.filter (>= 50) meaningScores) > 1)
+                                       || ( elem "idiomatic" $ sense
+                                              ^.. key "tags"
+                                                . values
+                                                . _String
+                                          )
+                                   )
+                          )
+                        $ entry
+                        ^.. key "senses"
+                          . values
+                    )
+            _ -> []
+          ensureSubmitted = do
+            content <- readFileLBS wiktextractPath
+            let _ = (filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry
+            pure ()
+      ensureSubmitted
     _ -> pure ()
-  pure ()
+
+extractMeaning :: Value -> Maybe Text
+extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
+
+isTarget :: Value -> Bool
+isTarget entry = isEnglish entry && isNotBenchmark entry
+
+isEnglish :: Value -> Bool
+isEnglish entry = case entry ^? key "lang" . _String of
+  Just "English" -> True
+  _ -> False
+
+isNotBenchmark :: Value -> Bool
+isNotBenchmark entry = case entry ^? key "word" . _String of
+  Just phrase -> benchmarkPhrase /= phrase
+  _ -> False
+
+benchmarkPhrase :: Text
+benchmarkPhrase = "dog"
 
 loadApiKeyHeader :: IO (Option 'Https)
 loadApiKeyHeader = do
@@ -81,9 +136,6 @@ renderEdn topic phrase meaning = "{:phrase " <> renderJson phrase <> " :meaning 
 
 renderJson :: (ToJSON a) => a -> Text
 renderJson = decodeUtf8 <$> encode
-
-benchmarkPhrase :: Text
-benchmarkPhrase = "dog"
 
 benchmarkMeaning :: Text
 benchmarkMeaning = "A dull, unattractive girl or woman."
