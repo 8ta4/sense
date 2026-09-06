@@ -1,5 +1,6 @@
 module Sense where
 
+import Control.Concurrent (threadDelay)
 import Control.Lens ((^..), (^?))
 import Control.Lens.Cons (_last)
 import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, encode, object)
@@ -10,7 +11,7 @@ import Data.List ((!!))
 import Data.Map qualified as Map
 import Data.Text (splitOn)
 import Data.Text qualified as Text
-import Network.HTTP.Req (HttpConfig (httpConfigRetryPolicy), Option, POST (POST), ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:))
+import Network.HTTP.Req (GET (GET), HttpConfig (httpConfigRetryPolicy), JsonResponse, NoReqBody (NoReqBody), Option, POST (POST), Req, ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
@@ -110,8 +111,30 @@ main = do
                         )
                       $ senses
                   )
+
+          ensureDownloaded = do
+            batchId <- readFileBS batchIdPath
+            maybeResponsesFile <- poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
+            pure ()
       ensureSubmitted
     _ -> pure ()
+
+poll :: Req (JsonResponse Value) -> IO (Maybe Text)
+poll request = do
+  response <- runReq defaultHttpConfig request
+  case (responseBody response) ^? key "metadata" . key "state" . _String of
+    Just "BATCH_STATE_SUCCEEDED" ->
+      pure
+        $ (!! 1)
+        <$> (splitOn "/")
+        <$> (responseBody response)
+        ^? key "response"
+          . key "responsesFile"
+          . _String
+    Just "BATCH_STATE_RUNNING" -> liftIO $ do
+      threadDelay 10000000
+      poll request
+    _ -> pure Nothing
 
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
