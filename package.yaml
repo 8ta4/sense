@@ -30,6 +30,7 @@ dependencies:
   - filepath
   - lens
   - lens-aeson
+  - modern-uri
   - optparse-applicative
   - process
   - relude

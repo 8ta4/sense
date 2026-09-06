@@ -77,6 +77,7 @@ executable download
     , filepath
     , lens
     , lens-aeson
+    , modern-uri
     , optparse-applicative
     , process
     , relude
@@ -138,6 +139,7 @@ executable sense
     , filepath
     , lens
     , lens-aeson
+    , modern-uri
     , optparse-applicative
     , process
     , relude
@@ -202,6 +204,7 @@ test-suite spec
     , filepath
     , lens
     , lens-aeson
+    , modern-uri
     , optparse-applicative
     , process
     , relude
