@@ -1,7 +1,10 @@
 module Sense where
 
-import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decodeFileStrict, encode, object)
+import Control.Lens ((^?))
+import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, encode, object)
 import Data.Aeson.Key (fromText)
+import Data.Aeson.Lens (key, _String)
+import Data.ByteString.Lazy.Char8 qualified as Char8
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
@@ -23,9 +26,26 @@ main = do
         case maybeMeaningScores of
           Just (meaningScores :: Map Text (Map Text Double)) -> do
             content <- readFileLBS wiktextractPath
+            let _ = filter isTarget $ mapMaybe decode $ Char8.lines content
             pure ()
           _ -> pure ()
   ensureSubmitted
+
+isTarget :: Value -> Bool
+isTarget entry = isEnglish entry && isNotBenchmark entry
+
+isEnglish :: Value -> Bool
+isEnglish entry = case entry ^? key "lang" . _String of
+  Just "English" -> True
+  _ -> False
+
+isNotBenchmark :: Value -> Bool
+isNotBenchmark entry = case entry ^? key "word" . _String of
+  Just phrase -> benchmarkPhrase /= phrase
+  _ -> False
+
+benchmarkPhrase :: Text
+benchmarkPhrase = "dog"
 
 loadApiKeyHeader :: IO (Option 'Https)
 loadApiKeyHeader = do
@@ -86,9 +106,6 @@ renderEdn topic phrase meaning = "{:phrase " <> renderJson phrase <> " :meaning 
 
 renderJson :: (ToJSON a) => a -> Text
 renderJson = decodeUtf8 <$> encode
-
-benchmarkPhrase :: Text
-benchmarkPhrase = "dog"
 
 benchmarkMeaning :: Text
 benchmarkMeaning = "A dull, unattractive girl or woman."
