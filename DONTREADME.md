@@ -32,11 +32,13 @@ No.
 
 Evaluating every meaning in Wiktionary would cost too much.
 
-`sense` throws out meanings that fail to meet both of the following criteria:
+From the Wiktionary meanings, `sense` evaluates only those that satisfy at least one of these criteria:
 
-- 50% or more of Americans aged 10 or older are thought to know the meaning.
+- The meaning is thought to be known by at least half of Americans aged 10 or older, and the phrase has another meaning that is also thought to be known by at least half of that group.
 
-- The meaning is tagged as `idiomatic`, or the phrase has another meaning that 50% or more of Americans aged 10 or older are thought to know.
+- The meaning is tagged as `idiomatic` and is thought to be known by at least half of Americans aged 10 or older.
+
+- The meaning begins with `Used other than figuratively or idiomatically`, and the phrase has another `idiomatic` meaning that is thought to be known by at least half of Americans aged 10 or older.
 
 > Does `sense` evaluate meanings that are not in Wiktionary?
 
