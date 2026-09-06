@@ -1,33 +1,106 @@
 module Sense where
 
-import Control.Lens ((^..), (^?))
+import Control.Concurrent (threadDelay)
+import Control.Lens (to, (^..), (^?))
 import Control.Lens.Cons (_last)
-import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, encode, object)
+import Control.Lens.Prism (_Just)
+import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, decodeStrictText, encode, object)
 import Data.Aeson.Key (fromText)
-import Data.Aeson.Lens (key, values, _Array, _String)
+import Data.Aeson.Lens (key, nth, values, _Array, _String)
+import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy.Char8 qualified as Char8
+import Data.List ((!!))
 import Data.Map qualified as Map
+import Data.Map.Lazy (insertWith, lookup, singleton, union)
+import Data.Text (splitOn)
 import Data.Text qualified as Text
-import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
+import Network.HTTP.Req (GET (GET), HttpConfig (httpConfigRetryPolicy), JsonResponse, NoReqBody (NoReqBody), Option, POST (POST), Req, ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, lbsResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:), (=:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
-import System.Directory (getHomeDirectory, getTemporaryDirectory)
+import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory)
 import System.FilePath ((</>))
+import Text.URI (mkURI)
+
+type RawScores = Map Text (Map Text (Double, Double))
+
+data Entry = Entry
+  { phrase :: !Text,
+    meaning :: !Text,
+    benchmarkScore :: !Double,
+    targetScore :: !Double
+  }
 
 main :: IO ()
 main = do
   statePath <- getStatePath
   let meanPath = statePath </> toString meanFilename
+      batchIdPath = statePath </> "id"
+  maybeMeanScores <- decodeFileStrict meanPath
+  batchExists <- doesFileExist batchIdPath
   wiktextractPath <- getWiktextractPath
   temporaryDirectory <- getTemporaryDirectory
   let inputPath = temporaryDirectory </> "input.jsonl"
+  apiKeyHeader <- loadApiKeyHeader
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
-  maybeMeanScores <- decodeFileStrict meanPath
+  let rawPath = toString (targetTopic <> ".json")
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
-      let processEntry entry = fromMaybe [] $ do
+      let ensureSubmitted = unless batchExists $ do
+            content <- readFileLBS wiktextractPath
+            writeFileLBS inputPath $ Char8.unlines $ makeBatchLine targetTopic <$> ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
+            fileSize <- getFileSize inputPath
+            let initialHeaders =
+                  apiKeyHeader
+                    <> header "X-Goog-Upload-Protocol" "resumable"
+                    <> header "X-Goog-Upload-Command" "start"
+                    <> header "X-Goog-Upload-Header-Content-Length" (show fileSize)
+                    <> header "X-Goog-Upload-Header-Content-Type" "application/json"
+            initialResponse <-
+              runReq defaultHttpConfig
+                $ req
+                  POST
+                  (host /: "upload" /: "v1beta" /: "files")
+                  (ReqBodyJson $ object [])
+                  ignoreResponse
+                  initialHeaders
+            case responseHeader initialResponse "x-goog-upload-url" of
+              Just uploadUrlHeader -> do
+                uploadUri <- mkURI $ decodeUtf8 uploadUrlHeader
+                case useHttpsURI uploadUri of
+                  Just (uploadUrl, uploadOptions) -> do
+                    uploadResponse <-
+                      runReq defaultHttpConfig
+                        $ req
+                          POST
+                          uploadUrl
+                          (ReqBodyFile inputPath)
+                          jsonResponse
+                          ( apiKeyHeader
+                              <> header "X-Goog-Upload-Offset" "0"
+                              <> header "X-Goog-Upload-Command" "upload, finalize"
+                              <> uploadOptions
+                          )
+                    case (responseBody uploadResponse :: Value) ^? key "file" . key "name" . _String of
+                      Just filename -> do
+                        batchResponse <-
+                          -- Disabling retries prevents submitting multiple batches and getting charged multiple times.
+                          runReq (defaultHttpConfig {httpConfigRetryPolicy = mempty})
+                            $ req
+                              POST
+                              batchUrl
+                              (ReqBodyJson $ makeBatchPayload filename)
+                              jsonResponse
+                              -- The API may take 30+ seconds to respond when submitting a batch request.
+                              (apiKeyHeader <> responseTimeout timeout)
+                        case (responseBody batchResponse :: Value) ^? key "name" . _String of
+                          Just batchName -> writeFileText batchIdPath $ (splitOn "/" batchName) !! 1
+                          _ -> pure ()
+                      _ -> pure ()
+                  _ -> pure ()
+              _ -> pure ()
+          processEntry entry = fromMaybe [] $ do
             phrase <- entry ^? key "word" . _String
             meaningScores <- Map.lookup phrase meanScores
             let senses = entry ^.. key "senses" . values
@@ -51,38 +124,24 @@ main = do
                         )
                       $ senses
                   )
-          ensureSubmitted = do
-            content <- readFileLBS wiktextractPath
-            let _ = ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
-            pure ()
+          ensureDownloaded = do
+            batchId <- readFileBS batchIdPath
+            maybeResponsesFile <- poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
+            case maybeResponsesFile of
+              Just responsesFile -> do
+                downloadResponse <-
+                  runReq defaultHttpConfig
+                    $ req
+                      GET
+                      (host /: "download" /: "v1beta" /: "files" /: (responsesFile <> ":download"))
+                      NoReqBody
+                      lbsResponse
+                      (apiKeyHeader <> "alt" =: ("media" :: Text))
+                writeFileLBS rawPath $ encode $ foldl' insertScore Map.empty $ mapMaybe parseResult $ Char8.lines $ responseBody downloadResponse
+              _ -> pure ()
       ensureSubmitted
+      ensureDownloaded
     _ -> pure ()
-
-isKnown' :: Double -> Bool
-isKnown' = (>= 50)
-
-isKnown :: Map Text Double -> Value -> Bool
-isKnown scores sense = fromMaybe False $ do
-  meaning <- extractMeaning sense
-  score <- Map.lookup meaning scores
-  pure $ isKnown' score
-
-isLiteral :: Value -> Bool
-isLiteral sense = fromMaybe False $ do
-  meaning <- extractMeaning sense
-  pure $ Text.isPrefixOf literalPrefix meaning
-
-syntheticLiteral :: Text
-syntheticLiteral = literalPrefix <> "."
-
-literalPrefix :: Text
-literalPrefix = "Used other than figuratively or idiomatically"
-
-extractMeaning :: Value -> Maybe Text
-extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
-
-isIdiomatic :: Value -> Bool
-isIdiomatic sense = elem "idiomatic" $ sense ^.. key "tags" . values . _String
 
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
@@ -177,6 +236,9 @@ percentageSchema =
 systemPrompt :: Text
 systemPrompt = "Estimate the percentage of Americans 10 years or older who consider each meaning on topic."
 
+batchUrl :: Url 'Https
+batchUrl = baseUrl /: "models" /: model <> ":batchGenerateContent"
+
 baseUrl :: Url 'Https
 baseUrl = host /: "v1beta"
 
@@ -185,3 +247,96 @@ host = https "generativelanguage.googleapis.com"
 
 model :: Text
 model = "gemini-3.6-flash"
+
+makeBatchPayload :: Text -> Value
+makeBatchPayload filename =
+  object
+    [ "batch"
+        .= object
+          [ "input_config"
+              .= object
+                ["file_name" .= filename]
+          ]
+    ]
+
+timeout :: Int
+timeout = 24 * 60 * 60 * 10 ^ (6 :: Int)
+
+makeBatchLine :: Text -> (Text, Text) -> Char8.ByteString
+makeBatchLine topic (phrase, meaning) =
+  encode
+    $ object
+      [ "key" .= renderJson [phrase, meaning],
+        "request" .= makeRequestPayload topic phrase meaning
+      ]
+
+isKnown :: Map Text Double -> Value -> Bool
+isKnown scores sense = fromMaybe False $ do
+  meaning <- extractMeaning sense
+  score <- Map.lookup meaning scores
+  pure $ isKnown' score
+
+isKnown' :: Double -> Bool
+isKnown' = (>= 50)
+
+isIdiomatic :: Value -> Bool
+isIdiomatic sense = elem "idiomatic" $ sense ^.. key "tags" . values . _String
+
+isLiteral :: Value -> Bool
+isLiteral sense = fromMaybe False $ do
+  meaning <- extractMeaning sense
+  pure $ Text.isPrefixOf literalPrefix meaning
+
+syntheticLiteral :: Text
+syntheticLiteral = literalPrefix <> "."
+
+literalPrefix :: Text
+literalPrefix = "Used other than figuratively or idiomatically"
+
+extractMeaning :: Value -> Maybe Text
+extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
+
+poll :: Req (JsonResponse Value) -> IO (Maybe Text)
+poll request = do
+  response <- runReq defaultHttpConfig request
+  case (responseBody response) ^? key "metadata" . key "state" . _String of
+    Just "BATCH_STATE_SUCCEEDED" ->
+      pure
+        $ (!! 1)
+        <$> (splitOn "/")
+        <$> (responseBody response)
+        ^? key "response"
+          . key "responsesFile"
+          . _String
+    Just "BATCH_STATE_RUNNING" -> liftIO $ do
+      threadDelay 10000000
+      poll request
+    _ -> pure Nothing
+
+parseResult :: LazyByteString -> Maybe Entry
+parseResult line = do
+  scores <-
+    line
+      ^? key "response"
+        . key "candidates"
+        . nth 0
+        . key "content"
+        . key "parts"
+        . nth 0
+        . key "text"
+        . _String
+        . to decodeStrictText
+        . _Just
+  keyPair <- line ^? key "key" . _String . to decodeStrictText . _Just
+  targetScore <- lookup (keyPair !! 0) scores
+  benchmarkScore <- lookup benchmarkPhrase scores
+  pure
+    $ Entry
+      { phrase = keyPair !! 0,
+        meaning = keyPair !! 1,
+        benchmarkScore,
+        targetScore
+      }
+
+insertScore :: RawScores -> Entry -> RawScores
+insertScore xs Entry {phrase, meaning, benchmarkScore, targetScore} = insertWith union phrase (singleton meaning (benchmarkScore, targetScore)) xs
