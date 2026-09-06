@@ -26,31 +26,31 @@ main = do
   maybeMeanScores <- decodeFileStrict meanPath
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
-      let processEntry entry = case entry ^? key "word" . _String of
-            Just phrase ->
-              (phrase,)
-                <$> ( mapMaybe extractMeaning
-                        $ filter
-                          ( \sense -> fromMaybe False $ do
-                              meaningScores <- Map.lookup phrase meanScores
-                              meaning <- extractMeaning sense
-                              score <- Map.lookup meaning meaningScores
-                              pure
-                                $ score
-                                >= 50
-                                && ( (Map.size (Map.filter (>= 50) meaningScores) > 1)
-                                       || ( elem "idiomatic" $ sense
-                                              ^.. key "tags"
-                                                . values
-                                                . _String
-                                          )
-                                   )
-                          )
-                        $ entry
-                        ^.. key "senses"
-                          . values
-                    )
-            _ -> []
+      let processEntry entry = fromMaybe [] $ do
+            phrase <- entry ^? key "word" . _String
+            meaningScores <- Map.lookup phrase meanScores
+            pure
+              $ (phrase,)
+              <$> ( mapMaybe extractMeaning
+                      $ filter
+                        ( \sense -> fromMaybe False $ do
+                            meaning <- extractMeaning sense
+                            score <- Map.lookup meaning meaningScores
+                            pure
+                              $ score
+                              >= 50
+                              && ( (Map.size (Map.filter (>= 50) meaningScores) > 1)
+                                     || ( elem "idiomatic" $ sense
+                                            ^.. key "tags"
+                                              . values
+                                              . _String
+                                        )
+                                 )
+                        )
+                      $ entry
+                      ^.. key "senses"
+                        . values
+                  )
           ensureSubmitted = do
             content <- readFileLBS wiktextractPath
             let _ = (filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry
