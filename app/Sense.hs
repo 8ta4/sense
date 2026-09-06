@@ -7,6 +7,7 @@ import Data.Aeson.Key (fromText)
 import Data.Aeson.Lens (key, values, _Array, _String)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.Map qualified as Map
+import Data.Text qualified as Text
 import Network.HTTP.Req (Option, Scheme (Https), Url, header, https, (/:))
 import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
@@ -26,40 +27,62 @@ main = do
   maybeMeanScores <- decodeFileStrict meanPath
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
-      let processEntry entry = case entry ^? key "word" . _String of
-            Just phrase ->
-              (phrase,)
-                <$> ( mapMaybe extractMeaning
-                        $ filter
-                          ( \sense -> fromMaybe False $ do
-                              meaningScores <- Map.lookup phrase meanScores
-                              meaning <- extractMeaning sense
-                              score <- Map.lookup meaning meaningScores
-                              pure
-                                $ score
-                                >= 50
-                                && ( (Map.size (Map.filter (>= 50) meaningScores) > 1)
-                                       || ( elem "idiomatic" $ sense
-                                              ^.. key "tags"
-                                                . values
-                                                . _String
-                                          )
-                                   )
-                          )
-                        $ entry
-                        ^.. key "senses"
-                          . values
+      let processEntry entry = fromMaybe [] $ do
+            phrase <- entry ^? key "word" . _String
+            meaningScores <- Map.lookup phrase meanScores
+            let senses = entry ^.. key "senses" . values
+                hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
+            pure
+              $ (phrase,)
+              <$> ( ( if hasKnownIdiom && not (any isLiteral senses)
+                        then (syntheticLiteral :)
+                        else id
                     )
-            _ -> []
+                      $ mapMaybe extractMeaning
+                      $ filter
+                        ( \sense ->
+                            isKnown meaningScores sense
+                              && ( Map.size (Map.filter isKnown' meaningScores)
+                                     > 1
+                                     || isIdiomatic sense
+                                 )
+                              || hasKnownIdiom
+                              && isLiteral sense
+                        )
+                      $ senses
+                  )
           ensureSubmitted = do
             content <- readFileLBS wiktextractPath
-            let _ = (filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry
+            let _ = ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
             pure ()
       ensureSubmitted
     _ -> pure ()
 
+isKnown' :: Double -> Bool
+isKnown' = (>= 50)
+
+isKnown :: Map Text Double -> Value -> Bool
+isKnown scores sense = fromMaybe False $ do
+  meaning <- extractMeaning sense
+  score <- Map.lookup meaning scores
+  pure $ isKnown' score
+
+isLiteral :: Value -> Bool
+isLiteral sense = fromMaybe False $ do
+  meaning <- extractMeaning sense
+  pure $ Text.isPrefixOf literalPrefix meaning
+
+syntheticLiteral :: Text
+syntheticLiteral = literalPrefix <> "."
+
+literalPrefix :: Text
+literalPrefix = "Used other than figuratively or idiomatically"
+
 extractMeaning :: Value -> Maybe Text
 extractMeaning sense = sense ^? key "glosses" . _Array . _last . _String
+
+isIdiomatic :: Value -> Bool
+isIdiomatic sense = elem "idiomatic" $ sense ^.. key "tags" . values . _String
 
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
