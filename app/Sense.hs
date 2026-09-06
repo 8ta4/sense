@@ -58,6 +58,14 @@ main = do
       ensureSubmitted
     _ -> pure ()
 
+makeBatchLine :: Text -> (Text, Text) -> Char8.ByteString
+makeBatchLine topic (phrase, meaning) =
+  encode
+    $ object
+      [ "key" .= renderJson [phrase, meaning],
+        "request" .= makeRequestPayload topic phrase meaning
+      ]
+
 isKnown' :: Double -> Bool
 isKnown' = (>= 50)
 
