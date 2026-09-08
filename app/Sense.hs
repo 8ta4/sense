@@ -49,7 +49,7 @@ main = do
     Just (meanScores :: Map Text (Map Text Double)) -> do
       let ensureSubmitted = unless batchExists $ do
             content <- readFileLBS wiktextractPath
-            writeFileLBS inputPath $ Char8.unlines $ makeBatchLine targetTopic <$> ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
+            writeFileLBS inputPath $ Char8.unlines $ makeBatchLine targetTopic <$> ordNub ((mapMaybe parseEntry $ filter isTarget $ mapMaybe decode $ Char8.lines content) >>= selectMeanings)
             fileSize <- getFileSize inputPath
             let initialHeaders =
                   apiKeyHeader
@@ -100,11 +100,9 @@ main = do
                       _ -> pure ()
                   _ -> pure ()
               _ -> pure ()
-          processEntry entry = fromMaybe [] $ do
-            phrase <- entry ^? key "word" . _String
+          selectMeanings (phrase, senses) = fromMaybe [] $ do
             meaningScores <- Map.lookup phrase meanScores
-            let senses = entry ^.. key "senses" . values
-                hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
+            let hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
             pure
               $ (phrase,)
               <$> ( ( if hasKnownIdiom && not (any isLiteral senses)
@@ -142,6 +140,11 @@ main = do
       ensureSubmitted
       ensureDownloaded
     _ -> pure ()
+
+parseEntry :: Value -> Maybe (Text, [Value])
+parseEntry entry = do
+  phrase <- entry ^? key "word" . _String
+  pure (phrase, entry ^.. key "senses" . values)
 
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
