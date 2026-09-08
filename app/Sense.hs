@@ -10,6 +10,7 @@ import Data.Aeson.Lens (key, nth, values, _Array, _String)
 import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.List ((!!))
+import Data.List.NonEmpty (groupWith)
 import Data.Map qualified as Map
 import Data.Map.Lazy (insertWith, lookup, singleton, union)
 import Data.Text (splitOn)
@@ -49,7 +50,19 @@ main = do
     Just (meanScores :: Map Text (Map Text Double)) -> do
       let ensureSubmitted = unless batchExists $ do
             content <- readFileLBS wiktextractPath
-            writeFileLBS inputPath $ Char8.unlines $ makeBatchLine targetTopic <$> ordNub ((filter isTarget $ mapMaybe decode $ Char8.lines content) >>= processEntry)
+            writeFileLBS inputPath
+              $ Char8.unlines
+              $ makeBatchLine targetTopic
+              <$> ordNub
+                ( mergeGroup
+                    <$> ( groupWith fst
+                            $ mapMaybe parseEntry
+                            $ filter isTarget
+                            $ mapMaybe decode
+                            $ Char8.lines content
+                        )
+                    >>= selectMeanings
+                )
             fileSize <- getFileSize inputPath
             let initialHeaders =
                   apiKeyHeader
@@ -100,11 +113,9 @@ main = do
                       _ -> pure ()
                   _ -> pure ()
               _ -> pure ()
-          processEntry entry = fromMaybe [] $ do
-            phrase <- entry ^? key "word" . _String
+          selectMeanings (phrase, senses) = fromMaybe [] $ do
             meaningScores <- Map.lookup phrase meanScores
-            let senses = entry ^.. key "senses" . values
-                hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
+            let hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
             pure
               $ (phrase,)
               <$> ( ( if hasKnownIdiom && not (any isLiteral senses)
@@ -142,6 +153,14 @@ main = do
       ensureSubmitted
       ensureDownloaded
     _ -> pure ()
+
+mergeGroup :: NonEmpty (a, [b]) -> (a, [b])
+mergeGroup entries@((phrase, _) :| _) = (phrase, concatMap snd entries)
+
+parseEntry :: Value -> Maybe (Text, [Value])
+parseEntry entry = do
+  phrase <- entry ^? key "word" . _String
+  pure (phrase, entry ^.. key "senses" . values)
 
 isTarget :: Value -> Bool
 isTarget entry = isEnglish entry && isNotBenchmark entry
