@@ -242,27 +242,23 @@ If the output TSV file is found in your current directory, the tool shuts down s
 
 Yes.
 
-> What are phrase blocks sorted by?
+Phrase blocks are sorted by these criteria:
 
-Phrase blocks are sorted by the difference between their highest and lowest scores.
+1. Contrast (descending): Blocks are ordered by the difference between their highest and lowest scores. The top of the file shows the phrases with the biggest contrast, since a sharp contrast in meaning can make jokes land better.
 
-> Are phrase blocks sorted in ascending or descending order?
+1. Highest score (descending): If the contrast ties, blocks get sorted by their highest individual score. A phrase that is more on-topic tends to make for a punchier joke than one with weaker links.
 
-Phrase blocks are sorted in descending order.
-
-Phrases with the biggest contrast are meant to appear at the top of the file.
+1. Phrase (ascending): If still tied, blocks are ordered alphabetically by phrase to make sure the results are deterministic and reproducible.
 
 > Are the meanings sorted within each phrase block?
 
 Yes.
 
-> What are the meanings within each phrase block sorted by?
+Each block's meanings are sorted by these criteria:
 
-The meanings in each phrase block are sorted by their connection scores.
+1. Connection score (descending): Meanings are listed from highest to lowest scores, so the biggest connections show up at the top.
 
-> Are meanings within each phrase block sorted in ascending or descending order?
-
-Meanings within each block are sorted in descending order.
+1. Meaning (ascending): When scores are tied, meanings are listed alphabetically. Alphabetical sorting makes the output deterministic and reproducible.
 
 > Is a JSON output file a JSON array?
 
