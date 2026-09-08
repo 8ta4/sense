@@ -10,9 +10,8 @@ import Data.Aeson.Lens (key, nth, values, _Array, _String)
 import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.List ((!!))
-import Data.List.NonEmpty (groupWith)
 import Data.Map qualified as Map
-import Data.Map.Lazy (insertWith, lookup, singleton, union)
+import Data.Map.Lazy (foldMapWithKey, fromListWith, insertWith, lookup, singleton, union)
 import Data.Text (splitOn)
 import Data.Text qualified as Text
 import Network.HTTP.Req (GET (GET), HttpConfig (httpConfigRetryPolicy), JsonResponse, NoReqBody (NoReqBody), Option, POST (POST), Req, ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, lbsResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:), (=:))
@@ -54,14 +53,12 @@ main = do
               $ Char8.unlines
               $ makeBatchLine targetTopic
               <$> ordNub
-                ( mergeGroup
-                    <$> ( groupWith fst
-                            $ mapMaybe parseEntry
-                            $ filter isTarget
-                            $ mapMaybe decode
-                            $ Char8.lines content
-                        )
-                    >>= selectMeanings
+                ( foldMapWithKey selectMeanings
+                    $ fromListWith (<>)
+                    $ mapMaybe parseEntry
+                    $ filter isTarget
+                    $ mapMaybe decode
+                    $ Char8.lines content
                 )
             fileSize <- getFileSize inputPath
             let initialHeaders =
@@ -113,7 +110,7 @@ main = do
                       _ -> pure ()
                   _ -> pure ()
               _ -> pure ()
-          selectMeanings (phrase, senses) = fromMaybe [] $ do
+          selectMeanings phrase senses = fromMaybe [] $ do
             meaningScores <- Map.lookup phrase meanScores
             let hasKnownIdiom = any (\sense -> isKnown meaningScores sense && isIdiomatic sense) senses
             pure
@@ -153,9 +150,6 @@ main = do
       ensureSubmitted
       ensureDownloaded
     _ -> pure ()
-
-mergeGroup :: NonEmpty (a, [b]) -> (a, [b])
-mergeGroup entries@((phrase, _) :| _) = (phrase, concatMap snd entries)
 
 parseEntry :: Value -> Maybe (Text, [Value])
 parseEntry entry = do
