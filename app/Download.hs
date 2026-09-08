@@ -23,7 +23,7 @@ main = do
   statePath <- getStatePath
   wiktextractPath <- getWiktextractPath
   let partsPath = statePath </> "parts"
-      meanPath = statePath </> toString meanFilename <> ".zst"
+      meanPath = statePath </> toString compressedFilename
       manifestPath = statePath </> toString manifestFilename
       downloadPart part = do
         let partPath = partsPath </> takeFileName part.url
@@ -42,13 +42,16 @@ main = do
   writeFileLBS wiktextractPath $ decompress $ fold partContents
 
 meanUrl :: String
-meanUrl = toString $ baseUrl <> meanFilename
+meanUrl = toString $ baseUrl <> compressedFilename
 
 baseUrl :: Text
 baseUrl = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/"
 
+compressedFilename :: Text
+compressedFilename = meanFilename <> ".zst"
+
 meanFilename :: Text
-meanFilename = "mean.json.zst"
+meanFilename = "mean.json"
 
 manifestUrl :: String
 manifestUrl = toString $ baseUrl <> manifestFilename
