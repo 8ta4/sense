@@ -10,6 +10,7 @@ import Data.Aeson.Lens (key, nth, values, _Array, _String)
 import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.List ((!!))
+import Data.List.NonEmpty (groupWith)
 import Data.Map qualified as Map
 import Data.Map.Lazy (insertWith, lookup, singleton, union)
 import Data.Text (splitOn)
@@ -49,7 +50,19 @@ main = do
     Just (meanScores :: Map Text (Map Text Double)) -> do
       let ensureSubmitted = unless batchExists $ do
             content <- readFileLBS wiktextractPath
-            writeFileLBS inputPath $ Char8.unlines $ makeBatchLine targetTopic <$> ordNub ((mapMaybe parseEntry $ filter isTarget $ mapMaybe decode $ Char8.lines content) >>= selectMeanings)
+            writeFileLBS inputPath
+              $ Char8.unlines
+              $ makeBatchLine targetTopic
+              <$> ordNub
+                ( mergeGroup
+                    <$> ( groupWith fst
+                            $ mapMaybe parseEntry
+                            $ filter isTarget
+                            $ mapMaybe decode
+                            $ Char8.lines content
+                        )
+                    >>= selectMeanings
+                )
             fileSize <- getFileSize inputPath
             let initialHeaders =
                   apiKeyHeader
@@ -140,6 +153,9 @@ main = do
       ensureSubmitted
       ensureDownloaded
     _ -> pure ()
+
+mergeGroup :: NonEmpty (a, [b]) -> (a, [b])
+mergeGroup entries@((phrase, _) :| _) = (phrase, concatMap snd entries)
 
 parseEntry :: Value -> Maybe (Text, [Value])
 parseEntry entry = do
