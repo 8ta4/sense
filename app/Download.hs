@@ -48,7 +48,7 @@ baseUrl :: Text
 baseUrl = "https://raw.githubusercontent.com/8ta4/mean-data/0a69fe730a0ea1bfaef84eba0dbe0f68ce991683/"
 
 meanFilename :: Text
-meanFilename = "mean.json.zst"
+meanFilename = "mean.json"
 
 manifestUrl :: String
 manifestUrl = toString $ baseUrl <> manifestFilename
