@@ -50,7 +50,7 @@ main = do
   apiKeyHeader <- loadApiKeyHeader
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   let rawPath = toString (targetTopic <> ".json")
-      normalizedPath = toString (targetTopic <> ".csv")
+      normalizedPath = toString (targetTopic <> ".tsv")
   rawExists <- doesFileExist rawPath
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
