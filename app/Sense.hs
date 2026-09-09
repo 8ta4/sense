@@ -21,6 +21,7 @@ import Options.Applicative (execParser, helper, strArgument)
 import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
+import Relude.Unsafe qualified as Unsafe
 import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory)
 import System.FilePath ((</>))
 import Text.URI (mkURI)
@@ -154,6 +155,27 @@ main = do
             case maybeRawScores of
               Just (rawScores :: RawScores) -> do
                 let meanBenchmarkScore = Foldl.fold mean $ elems rawScores >>= ((fst <$>) <$> elems)
+                    _ =
+                      sortOn phraseOrder
+                        $ ( \(phrase, meaningScores) ->
+                              ( phrase,
+                                sortOn meaningOrder
+                                  $ ( second
+                                        ( \(benchmarkScore, targetScore) ->
+                                            if targetScore == 0
+                                              then 0
+                                              else
+                                                if targetScore <= benchmarkScore
+                                                  then
+                                                    targetScore * meanBenchmarkScore / benchmarkScore
+                                                  else
+                                                    100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
+                                        )
+                                    )
+                                  <$> Map.toList meaningScores
+                              )
+                          )
+                        <$> Map.toList rawScores
                 pure ()
               _ -> pure ()
             pure ()
@@ -161,6 +183,14 @@ main = do
       ensureDownloaded
       ensureNormalized
     _ -> pure ()
+
+phraseOrder :: (a, [(b, Double)]) -> (Down Double, Down Double, a)
+phraseOrder (phrase, meaningScores) =
+  let highestScore = snd $ Unsafe.head $ meaningScores
+   in (Down (highestScore - (snd $ Unsafe.last $ meaningScores)), Down highestScore, phrase)
+
+meaningOrder :: (b, a) -> (Down a, b)
+meaningOrder (meaning, score) = (Down score, meaning)
 
 parseEntry :: Value -> Maybe (Text, [Value])
 parseEntry entry = do
