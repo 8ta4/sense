@@ -24,7 +24,7 @@ import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
 import Relude.Unsafe qualified as Unsafe
-import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory, removeFile)
+import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory, removePathForcibly)
 import System.FilePath ((</>))
 import Text.URI (mkURI)
 
@@ -139,7 +139,7 @@ main = do
                         )
                       $ senses
                   )
-          ensureDownloaded = do
+          ensureDownloaded = unless rawExists $ do
             batchId <- readFileBS batchIdPath
             maybeResponsesFile <- poll $ req GET (baseUrl /: "batches" /: decodeUtf8 batchId) NoReqBody jsonResponse apiKeyHeader
             case maybeResponsesFile of
@@ -183,7 +183,7 @@ main = do
                         )
                     )
                   <$> Map.toList rawScores
-                removeFile batchIdPath
+                removePathForcibly batchIdPath
               _ -> pure ()
       ensureSubmitted
       ensureDownloaded
