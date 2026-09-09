@@ -24,7 +24,7 @@ import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
 import Relude.Unsafe qualified as Unsafe
-import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory)
+import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory, removeFile)
 import System.FilePath ((</>))
 import Text.URI (mkURI)
 
@@ -181,6 +181,7 @@ main = do
                         )
                     )
                   $ Map.toList rawScores
+                removeFile batchIdPath
               _ -> pure ()
             pure ()
       ensureSubmitted
