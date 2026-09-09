@@ -1,20 +1,16 @@
 module Spec where
 
-import Data.Yaml (Value, decodeFileEither)
-import Main (Config, baseUrl, loadApiKeyHeader, makePayload, model)
+import Data.Aeson (Value)
 import Network.HTTP.Req (POST (POST), ReqBodyJson (ReqBodyJson), defaultHttpConfig, jsonResponse, req, responseBody, runReq, (/:))
 import Relude
+import Sense (baseUrl, loadApiKeyHeader, makeRequestPayload, model)
 
 main :: IO ()
 main = do
   apiKeyHeader <- loadApiKeyHeader
-  result <- decodeFileEither "fat.yaml"
-  case result of
-    Left _ -> pure ()
-    Right (config :: Config) -> runReq defaultHttpConfig $ do
-      let payload = makePayload config "strain"
-      putTextLn "Payload:"
-      print payload
-      response <- req POST (baseUrl /: "models" /: model <> ":generateContent") (ReqBodyJson payload) jsonResponse apiKeyHeader
-      putTextLn "Response:"
-      print (responseBody response :: Value)
+  let payload = makeRequestPayload "fat" "sense" "Any of the manners by which living beings perceive the physical world: for humans sight, smell, hearing, touch, taste."
+  putTextLn "Payload:"
+  print payload
+  putTextLn "Response:"
+  response <- runReq defaultHttpConfig $ req POST (baseUrl /: "models" /: model <> ":generateContent") (ReqBodyJson payload) jsonResponse apiKeyHeader
+  print (responseBody response :: Value)
