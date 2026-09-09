@@ -1,6 +1,8 @@
 module Sense where
 
 import Control.Concurrent (threadDelay)
+import Control.Foldl (mean)
+import Control.Foldl qualified as Foldl
 import Control.Lens (to, (^..), (^?))
 import Control.Lens.Cons (_last)
 import Control.Lens.Prism (_Just)
@@ -11,7 +13,7 @@ import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy.Char8 qualified as Char8
 import Data.List ((!!))
 import Data.Map qualified as Map
-import Data.Map.Lazy (foldMapWithKey, fromListWith, insertWith, lookup, singleton, union)
+import Data.Map.Lazy (elems, foldMapWithKey, fromListWith, insertWith, lookup, singleton, union)
 import Data.Text (splitOn)
 import Data.Text qualified as Text
 import Network.HTTP.Req (GET (GET), HttpConfig (httpConfigRetryPolicy), JsonResponse, NoReqBody (NoReqBody), Option, POST (POST), Req, ReqBodyFile (ReqBodyFile), ReqBodyJson (ReqBodyJson), Scheme (Https), Url, defaultHttpConfig, header, https, ignoreResponse, jsonResponse, lbsResponse, req, responseBody, responseHeader, responseTimeout, runReq, useHttpsURI, (/:), (=:))
@@ -147,8 +149,17 @@ main = do
                       (apiKeyHeader <> "alt" =: ("media" :: Text))
                 writeFileLBS rawPath $ encode $ foldl' insertScore Map.empty $ mapMaybe parseResult $ Char8.lines $ responseBody downloadResponse
               _ -> pure ()
+          ensureNormalized = do
+            maybeRawScores <- decodeFileStrict rawPath
+            case maybeRawScores of
+              Just (rawScores :: RawScores) -> do
+                let meanBenchmarkScore = Foldl.fold mean $ elems rawScores >>= ((fst <$>) <$> elems)
+                pure ()
+              _ -> pure ()
+            pure ()
       ensureSubmitted
       ensureDownloaded
+      ensureNormalized
     _ -> pure ()
 
 parseEntry :: Value -> Maybe (Text, [Value])
