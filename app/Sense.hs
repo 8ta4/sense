@@ -154,6 +154,24 @@ main = do
             case maybeRawScores of
               Just (rawScores :: RawScores) -> do
                 let meanBenchmarkScore = Foldl.fold mean $ elems rawScores >>= ((fst <$>) <$> elems)
+                    _ =
+                      ( \(phrase, meaningScores) ->
+                          sortOn meaningOrder
+                            $ ( second
+                                  ( \(benchmarkScore, targetScore) ->
+                                      if targetScore == 0
+                                        then 0
+                                        else
+                                          if targetScore <= benchmarkScore
+                                            then
+                                              targetScore * meanBenchmarkScore / benchmarkScore
+                                            else
+                                              100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
+                                  )
+                              )
+                            <$> Map.toList meaningScores
+                      )
+                        <$> Map.toList rawScores
                 pure ()
               _ -> pure ()
             pure ()
@@ -161,6 +179,9 @@ main = do
       ensureDownloaded
       ensureNormalized
     _ -> pure ()
+
+meaningOrder :: (b, a) -> (Down a, b)
+meaningOrder (meaning, score) = (Down score, meaning)
 
 parseEntry :: Value -> Maybe (Text, [Value])
 parseEntry entry = do
