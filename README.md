@@ -12,6 +12,8 @@
 
 1. Make sure you're using a Mac with Apple silicon.
 
+1. Make sure the billing account linked to your Google AI Studio project is on Tier 2.
+
 1. Install [Homebrew](https://brew.sh/#install).
 
 1. Install [devenv](https://github.com/cachix/devenv/blob/83e8d7d34bdebad98ab936b6af53d57ae67af420/docs/src/getting-started.md#installation).
@@ -36,17 +38,10 @@
 
 1. Open a terminal.
 
-1. Make a YAML config file like this in the current directory.
-
-   ```yaml
-   benchmark: "on one's plate"
-   theme: "fat"
-   ```
-
-1. Run the command with your configuration file.
+1. Run the command with your topic.
 
    ```bash
-   sense fat.yaml
+   sense fat
    ```
 
 Once the API batches finish, `sense` will drop two files into your current directory:
@@ -59,7 +54,15 @@ Once the API batches finish, `sense` will drop two files into your current direc
 
 Yes.
 
-If you set `idioms: true` in your YAML file, `sense` will only run idioms.
+If you use the `-i` flag, `sense` will only run idioms.
+
+```bash
+sense -i fat
+```
+
+If you use the `-i` flag, `sense` spits out `<topic>.idioms.tsv` and `<topic>.idioms.json` instead of `<topic>.tsv` and `<topic>.json`.
+
+Using different file names stops you from confusing an idiom-only run with a full vocabulary run.
 
 Checking the whole vocabulary:
 
@@ -73,6 +76,6 @@ Limiting the run to idioms:
 
 - guarantees multiple meanings because an idiom has both a literal meaning and an idiomatic one.
 
-For common topics, you can evaluate the whole vocabulary without `idioms: true` to prioritize recall. Finding as many potential double meanings as possible may be worth the extra cost and review time.
+For common topics, you can evaluate the whole vocabulary without `-i` to prioritize recall. Finding as many potential double meanings as possible may be worth the extra cost and review time.
 
-For niche topics, you can set `idioms: true` to prioritize precision. You might prefer a reliable set of double meanings at a lower cost rather than complete coverage.
+For niche topics, you can use `-i` to prioritize precision. You might prefer a reliable set of double meanings at a lower cost rather than complete coverage.

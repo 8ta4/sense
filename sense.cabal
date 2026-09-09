@@ -23,9 +23,11 @@ source-repository head
   type: git
   location: https://github.com/githubuser/sense
 
-executable sense
-  main-is: Main.hs
+executable download
+  main-is: Download.hs
   other-modules:
+      Path
+      Sense
       Paths_sense
   autogen-modules:
       Paths_sense
@@ -36,6 +38,7 @@ executable sense
       ConstraintKinds
       DataKinds
       DefaultSignatures
+      DeriveAnyClass
       DeriveFunctor
       DeriveFoldable
       DeriveTraversable
@@ -62,27 +65,99 @@ executable sense
       TupleSections
       TypeFamilies
       ViewPatterns
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -main-is Main
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -main-is Download
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base16-bytestring
+    , bytestring
     , cassava
+    , containers
+    , cryptohash
     , directory
     , filepath
+    , foldl
     , lens
     , lens-aeson
+    , modern-uri
     , optparse-applicative
+    , process
     , relude
     , req
-    , vector
-    , yaml
+    , zlib
+  default-language: Haskell2010
+
+executable sense
+  main-is: Sense.hs
+  other-modules:
+      Download
+      Path
+      Paths_sense
+  autogen-modules:
+      Paths_sense
+  hs-source-dirs:
+      app
+  default-extensions:
+      BangPatterns
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveFunctor
+      DeriveFoldable
+      DeriveTraversable
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      EmptyDataDecls
+      FlexibleContexts
+      FlexibleInstances
+      GeneralizedNewtypeDeriving
+      ImportQualifiedPost
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      NamedFieldPuns
+      NoImplicitPrelude
+      PatternGuards
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      OverloadedRecordDot
+      OverloadedStrings
+      ScopedTypeVariables
+      TupleSections
+      TypeFamilies
+      ViewPatterns
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-trustworthy-safe -Wno-inferred-safe-imports -Wno-missing-safe-haskell-mode -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-deriving-strategies -Wno-missing-export-lists -Wno-missing-kind-signatures -Wno-partial-fields -Wno-missing-role-annotations -main-is Sense
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , base16-bytestring
+    , bytestring
+    , cassava
+    , containers
+    , cryptohash
+    , directory
+    , filepath
+    , foldl
+    , lens
+    , lens-aeson
+    , modern-uri
+    , optparse-applicative
+    , process
+    , relude
+    , req
+    , zlib
   default-language: Haskell2010
 
 test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Main
+      Download
+      Path
+      Sense
       Paths_sense
   autogen-modules:
       Paths_sense
@@ -94,6 +169,7 @@ test-suite spec
       ConstraintKinds
       DataKinds
       DefaultSignatures
+      DeriveAnyClass
       DeriveFunctor
       DeriveFoldable
       DeriveTraversable
@@ -124,14 +200,20 @@ test-suite spec
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base16-bytestring
+    , bytestring
     , cassava
+    , containers
+    , cryptohash
     , directory
     , filepath
+    , foldl
     , lens
     , lens-aeson
+    , modern-uri
     , optparse-applicative
+    , process
     , relude
     , req
-    , vector
-    , yaml
+    , zlib
   default-language: Haskell2010

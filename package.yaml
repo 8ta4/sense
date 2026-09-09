@@ -20,18 +20,24 @@ extra-source-files:
 description: Please see the README on GitHub at <https://github.com/githubuser/sense#readme>
 
 dependencies:
-  - aeson
   - base >= 4.7 && < 5
+  - aeson
+  - base16-bytestring
+  - bytestring
   - cassava
+  - containers
+  - cryptohash
   - directory
   - filepath
+  - foldl
   - lens
   - lens-aeson
+  - modern-uri
   - optparse-applicative
+  - process
   - relude
   - req
-  - vector
-  - yaml
+  - zlib
 
 ghc-options:
   # https://github.com/commercialhaskell/stack-templates/blob/360442dbdc3d114df5fe377306978d4f47694370/new-template.hsfiles#L45-L47
@@ -79,6 +85,7 @@ default-extensions:
   - ConstraintKinds
   - DataKinds
   - DefaultSignatures
+  - DeriveAnyClass
   - DeriveFunctor
   - DeriveFoldable
   - DeriveTraversable
@@ -111,8 +118,10 @@ source-dirs: app
 # We avoid defining a separate library component to work around a Haskell Language Server (HLS) issue with cross-component dependencies.
 # HLS does not reflect changes made in the library component within the executable component until the library is recompiled and HLS is restarted.
 executables:
+  download:
+    main: Download
   sense:
-    main: Main
+    main: Sense
 
 tests:
   spec:

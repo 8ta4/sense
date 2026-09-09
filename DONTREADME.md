@@ -14,39 +14,39 @@ Instead, `sense` leans on a large language model (LLM) to score connections.
 
 ### Coverage
 
-> Does `sense` evaluate every English word?
+> Does `sense` evaluate both single words and multiword phrases for double meanings?
+
+Yes.
+
+Both can act as pivots.
+
+> Does `sense` evaluate every meaning of any English word?
 
 No.
 
 `sense` pulls its vocabulary from English Wiktionary entries.
 
-> Does `sense` evaluate every English word in Wiktionary?
+> Does `sense` evaluate every meaning from Wiktionary?
 
 No.
 
-Evaluating every English word in Wiktionary would cost too much.
+Evaluating every meaning in Wiktionary would cost too much.
 
-`sense` narrows its scope based on the following criteria:
+From the Wiktionary meanings, `sense` evaluates only those that satisfy at least one of these criteria:
 
-- Wiktionary tags the phrase as `English lemmas`.
+- The meaning is thought to be known by at least half of Americans aged 10 or older, and the phrase has another meaning that is also thought to be known by at least half of that group.
 
-- About half of Americans aged 10 and up are thought to know the phrase's most common meaning.
+- The meaning is tagged as `idiomatic` and is thought to be known by at least half of Americans aged 10 or older.
 
-> Does `sense` process a Wiktionary dump?
+- The meaning begins with `Used other than figuratively or idiomatically`, and the phrase has another `idiomatic` meaning that is thought to be known by at least half of Americans aged 10 or older.
 
-No.
-
-`sense` pulls the `wiktionary.tsv` file from the [`prevalence-data`](https://github.com/8ta4/prevalence-data) repo.
-
-> Does `sense` check both single words and multi-word phrases for double meanings?
+> Does `sense` evaluate meanings that are not in Wiktionary?
 
 Yes.
 
-Both can act as pivots:
+Wiktionary often tags a phrase's meaning as `idiomatic`. Wiktionary occasionally lists a meaning that starts with `Used other than figuratively or idiomatically`, though it can omit that part.
 
-- "[Obese children put a lot of strain on the NHS, not to mention seesaws and swings.](https://youtu.be/6wplEAkNXow?t=1671)"
-
-- "[She recently went to her GP just for the annual checkup. She was classified by her own GP as being morbidly obese. Who came up with that term? That's so unnecessarily harsh, morbidly obese as if she doesn't have enough on her plate.](https://youtu.be/Tehlt1P-NM0?t=2907)"
+These jokes often contrast an idiom with its literal reading. When a phrase has an idiomatic meaning that's thought to be known by at least half of Americans aged 10 or older, `sense` makes sure a literal counterpart is evaluated. If a phrase already has a meaning that begins with `Used other than figuratively or idiomatically`, then `sense` just evaluates that meaning. If Wiktionary doesn't have a meaning that starts with `Used other than figuratively or idiomatically`, `sense` tacks on `Used other than figuratively or idiomatically.` for evaluation.
 
 ### Budget
 
@@ -60,13 +60,11 @@ The target is to keep monthly usage under $100. I set this limit because most pr
 
 No, because it's a percentage.
 
-Specifically, it's the percentage of Americans 10 years or older who would understand a joke connecting the phrase to the theme.
+Specifically, it's the percentage of Americans 10 years or older who consider each meaning on topic.
 
 - "Americans" pins it to a clear population, avoiding wishy-washy concepts like "native speakers" that are open to interpretation. Because the U.S. has the biggest number of native English speakers worldwide, it makes sense to treat it as the default audience.
 
 - "10 years or older" filters out babies, making it easier to sanity-check the model output, as super obvious connections should hit near 100%.
-
-- "Understand a joke connecting the phrase to the theme" is kinda undefined, because it hinges on a hypothetical joke. But testing found that a tighter framing made the LLM spew out nonsense scores. Because `sense`'s aim is to spot double meanings for comedy writing, framing the prompt as a joke fits the use case.
 
 > Is the connection score an integer?
 
@@ -74,21 +72,21 @@ Nah, it's a double. Doubles allow finer ordering.
 
 > What model does `sense` use?
 
-`sense` uses [`gemini-3.5-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash) for these reasons:
+`sense` uses [`gemini-3.6-flash`](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash) for these reasons:
 
-- Among models that cost under $10 per million output tokens without batching, have a public API, and offer solid scoring, `gemini-3.5-flash` ranks highest on [Text Arena](https://arena.ai/leaderboard/text).
+- Among models that cost under $10 per million output tokens without batching, have a public API, and offer solid scoring, `gemini-3.6-flash` ranks highest on [Text Arena](https://arena.ai/leaderboard/text).
 
-- `gemini-3.5-flash` is a production model.
+- `gemini-3.6-flash` is a production model.
 
-- Less capable models tend to change their scores dramatically if the order of phrases to evaluate gets swapped. `gemini-3.5-flash` seems pretty resistant to this order dependency. Even though `sense` keeps the benchmark phrase in a fixed spot, the model's native resistance boosts confidence in the scores.
+- Less capable models tend to change their scores dramatically if the order of phrases to evaluate gets swapped. `gemini-3.6-flash` seems pretty resistant to this order dependency. Even though `sense` keeps the benchmark phrase in a fixed spot, the model's native resistance boosts confidence in the scores.
 
-- `gemini-3.5-flash` allows running at a temperature of 0.
+- `gemini-3.6-flash` allows running at a temperature of 0.
 
 - Setting the thinking level to `minimal` effectively turns off thinking for this task.
 
-- `gemini-3.5-flash` [supports structured outputs](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash#:~:text=Supported-,Structured%20outputs,-Supported).
+- `gemini-3.6-flash` [supports structured outputs](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash#:~:text=Supported-,Structured%20outputs,-Supported).
 
-- `gemini-3.5-flash` [supports the Batch API](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash#:~:text=Consumption%20options-,Batch%20API,-Supported).
+- `gemini-3.6-flash` [supports the Batch API](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash#:~:text=Consumption%20options-,Batch%20API,-Supported).
 
 > Does `sense` use a system prompt?
 
@@ -126,19 +124,53 @@ Yes.
 
 Using structured outputs makes sure the API response includes the scoring fields `sense` needs.
 
-> How many phrases are sent to the LLM per rating request?
+> How many items does each request in a batch evaluate?
 
-Each request includes two phrases.
+Each request in a batch evaluates two items:
 
-- The benchmark phrase you give to set the baseline across requests.
+- The benchmark item, which sets the baseline across requests.
 
-- The target phrase the system grabs while looping through the vocabulary.
+- The target item, which pairs a vocabulary entry with the topic passed in the command.
 
-> Is the benchmark phrase or the target phrase scored first?
+> What fields does each item in a rating request have?
 
-The benchmark phrase gets scored first.
+Each item has three fields.
 
-Scoring the benchmark phrase first makes sure it's evaluated before the target phrase's score is generated. This way, the benchmark phrase's context stays more alike across requests compared to using the reverse order.
+- `phrase`: A word or a multiword term.
+
+- `meaning`: A Wiktionary gloss.
+
+- `topic`: A topic to evaluate the phrase and meaning against.
+
+> Does `sense` use JSON in a prompt to format items for evaluation?
+
+No.
+
+`sense` puts each item on its own line as an EDN map, which helps save token usage.
+
+> What is the benchmark phrase?
+
+`sense` uses `dog`.
+
+The benchmark meaning is `A dull, unattractive girl or woman.` The benchmark topic is `ugly`.
+
+A benchmark phrase should meet these criteria:
+
+- At least two meanings are recognized by at least half of Americans 10 years or older.
+
+- The benchmark meaning is so clearly tied to the topic that false positives get filtered out.
+
+- A popular comic used the phrase in a double‑meaning joke in their stand‑up special.
+
+- The phrase is a short word to minimize token costs across batch runs.
+
+I watched Jimmy Carr's stand‑up specials on YouTube, joke by joke. Only the word `dog` met all the above criteria. Here's the joke: "[A dog is for life, not just for Christmas. So do be careful at the office party.](https://youtu.be/wwQS2YZhQ40?t=3875)"
+
+> Is the benchmark item or the target item scored first?
+
+The benchmark item gets scored first.
+
+Scoring the benchmark item first makes sure it's evaluated before the target item's score is generated. This way, the benchmark item's context stays more alike across requests compared to using the reverse order.
 
 > Are the connection scores normalized across multiple requests?
 
@@ -160,39 +192,45 @@ $$
 
 where:
 
-- $X$: The original score of a target phrase in the current request.
+- $X$: The original score of a target item in the current request.
 
-- $\bar{X}$: The normalized score of the target phrase.
+- $\bar{X}$: The normalized score of the target item.
 
-- $B$: The score of the benchmark phrase in the current request.
+- $B$: The score of the benchmark item in the current request.
 
-- $\bar{B}$: The mean score of the benchmark phrase across all requests.
+- $\bar{B}$: The mean score of the benchmark item across all requests.
 
 It's assumed that $B \neq 0$ and $B \neq 100$. If $B$ ever hits 0 or 100, the pair gets dropped during normalization.
 
-This piecewise approach ensures that scores of 0% and 100% remain unchanged, while scores near the benchmark are adjusted proportionally to the benchmark phrase's difference from its mean.
+This piecewise approach ensures that scores of 0% and 100% remain unchanged, while scores near the benchmark are adjusted proportionally to the benchmark item's difference from its mean.
 
-> Does `sense` score each phrase multiple times and average the results?
+> Does `sense` score each item multiple times and average the results?
 
 No.
 
-Running the same phrase a couple of times and averaging the results could potentially help smooth out any random noise.
+Running the same item a couple of times and averaging the results could potentially help smooth out any random noise.
 
-But `sense` skips that. Making multiple requests per phrase incurs more API calls.
+But `sense` skips that. Making multiple requests per item incurs more API calls.
 
 ## Output
 
 > How many columns does a TSV output file have?
 
-A TSV output file has two columns.
+A TSV output file comes with three columns:
 
-The first column has the target phrase, and the second one has the normalized score.
+1. The target phrase
 
-> Are the entries in a TSV output file sorted?
+1. The target meaning
+
+1. The normalized connection score
+
+> Does a TSV file group meanings by phrase?
 
 Yes.
 
-The entries are sorted by descending normalized score, then by ascending target phrase.
+All the meanings of a target phrase appear together in a block.
+
+Grouping all the meanings of the same phrase side by side helps you compare them when you're crafting a joke.
 
 > Will `sense` overwrite an existing TSV output file?
 
@@ -200,49 +238,67 @@ No.
 
 If the output TSV file is found in your current directory, the tool shuts down so you don't duplicate work.
 
+> Are the phrase blocks sorted?
+
+Yes.
+
+Phrase blocks are sorted by these criteria:
+
+1. Contrast (descending): Blocks are ordered by the difference between their highest and lowest scores. The top of the file shows the phrases with the biggest contrast, since a sharp contrast in meaning can make jokes land better.
+
+1. Highest score (descending): If the contrast ties, blocks get sorted by their highest individual score. A phrase that is more on-topic tends to make for a punchier joke than one with weaker links.
+
+1. Phrase (ascending): If still tied, blocks are ordered alphabetically by phrase to make sure the results are deterministic and reproducible.
+
+> Are the meanings sorted within each phrase block?
+
+Yes.
+
+Each block's meanings are sorted by these criteria:
+
+1. Connection score (descending): Meanings are listed from highest to lowest scores, so the biggest connections show up at the top.
+
+1. Meaning (ascending): When scores are tied, meanings are listed alphabetically. Alphabetical sorting makes the output deterministic and reproducible.
+
 > Is a JSON output file a JSON array?
 
 No.
 
-A JSON output file is a JSON object. The keys hold the target phrases, while the values hold the maps the API returns.
+A JSON output file is a JSON object. The object maps each phrase to an object whose keys are its meanings and whose values are raw score pairs for the benchmark and target items. If you adjust the formula, you can run the normalization again without incurring another batch API charge.
 
-Using a JSON object instead of an array gives you these perks:
-
-- The keys in the accumulating JSON file serve as the single source of truth for completed work.
-
-- Merging batch results into a map by key is idempotent. Merging the same batch data more than once will replace the current keys with identical score data rather than creating duplicate entries.
-
-> Does `sense` split single words and multi-word phrases into separate output files?
+> Does `sense` split single words and multiword phrases into separate output files?
 
 No.
 
-- You'll probably want to search both single words and multi-word phrases at once.
+- You'll probably want to search both single words and multiword phrases at once.
 
-- If you ever need to split single words from multi-word phrases, it's easy to filter the data in a spreadsheet by checking for spaces in the entries.
+- If you ever need to split single words from multiword phrases, it's easy to filter the data in a spreadsheet by checking for spaces in the entries.
 
 ## Batching
 
-> Does `sense` submit the whole list of phrases in one batch?
+> Does `sense` automatically loop to submit multiple batches?
 
 No.
 
-Submitting the whole list of phrases in one batch would exceed the enqueued token limit of Gemini's Tier 1 Batch API.
+`sense` submits at most one batch per command invocation.
 
-Instead, `sense` splits the list into batches.
+If an error occurs, loops on large datasets can cause runaway billing.
 
-Tier 2 boosts the token limit a lot. But Tier 2 requires [a $100 payment and a three‑day waiting period after your first payment](https://ai.google.dev/gemini-api/docs/rate-limits#:~:text=Paid%20%24100%20%2B%203%20days%20from%20first%20successful%20payment). `sense` is designed to work on Tier 1, so you can use the tool immediately without paying a steep upfront cost.
-
-> Does `sense` send multiple batches simultaneously?
-
-No.
-
-`sense` processes batches sequentially. That way, I dodge the headache of tracking a bunch of active batch names.
-
-> Does `sense` wait for a batch to finish?
+> Does `sense` require Tier 2?
 
 Yes.
 
-`sense` stays running in the terminal to monitor the active batch. When the batch finishes, `sense` downloads the results, merges them, and submits the next batch if there's another one.
+Tier 1 limits enqueued tokens for `gemini-3.6-flash` to [3,000,000](https://ai.google.dev/gemini-api/docs/rate-limits#:~:text=Gemini%203.6%20Flash-,3%2C000%2C000,-Gemini%203.5%20Flash). So evaluating the full dataset on Tier 1 would theoretically require invoking `sense` a bunch of times.
+
+Tier 2 bumps the limits for `gemini-3.6-flash` up by roughly an order of magnitude, raising them to [400,000,000](https://ai.google.dev/gemini-api/docs/rate-limits#tier-2:~:text=Gemini%203.6%20Flash-,400%2C000%2C000,-Gemini%203.5%20Flash) enqueued tokens. In theory, this boost cuts down on the number of manual runs. If one run is enough, that'd be a batch made in heaven.
+
+> Does `sense` wait for the batch to finish?
+
+Yes.
+
+`sense` stays running in the terminal to monitor the active batch.
+
+If the batch completes successfully, `sense` processes the results into the output files.
 
 > What's the polling interval?
 
@@ -256,19 +312,13 @@ No.
 
 `sense` grabs a lock. The second instance run will fail to acquire the lock.
 
-## Resumability
+## Resuming
 
 > Can `sense` keep going if it gets interrupted?
 
 Yes.
 
 If the `sense` process quits before making the output files, running the command again will pick up where it left off.
-
-> Does `sense` write an incomplete JSON file to the current working directory?
-
-No.
-
-When it's gathering data, `sense` puts the growing JSON file into `~/.local/state/sense/`. `sense` only drops completed files into the current working directory when the JSON file is complete.
 
 > Does a crash during a write operation corrupt the accumulated results?
 
