@@ -160,8 +160,9 @@ main = do
                 let meanBenchmarkScore = Foldl.fold mean $ elems rawScores >>= ((fst <$>) <$> elems)
                 writeFileLBS normalizedPath
                   $ encodeWith tsvOptions
-                  $ concatMap
-                    ( \(phrase, meaningScores) ->
+                  $ join
+                  $ sortOn phraseOrder
+                  $ ( \(phrase, meaningScores) ->
                         ( uncurry (phrase,,)
                             <$> ( sortOn meaningOrder
                                     $ ( second
@@ -180,7 +181,7 @@ main = do
                                 )
                         )
                     )
-                  $ Map.toList rawScores
+                  <$> Map.toList rawScores
                 removeFile batchIdPath
               _ -> pure ()
       ensureSubmitted
