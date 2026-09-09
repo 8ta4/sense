@@ -3,9 +3,10 @@ module Sense where
 import Control.Concurrent (threadDelay)
 import Control.Foldl (mean)
 import Control.Foldl qualified as Foldl
-import Control.Lens (to, (^..), (^?))
+import Control.Lens (to, (^.), (^..), (^?))
 import Control.Lens.Cons (_last)
 import Control.Lens.Prism (_Just)
+import Control.Lens.Tuple (_1, _3)
 import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, decodeStrictText, encode, object)
 import Data.Aeson.Key (fromText)
 import Data.Aeson.Lens (key, nth, values, _Array, _String)
@@ -156,26 +157,27 @@ main = do
               Just (rawScores :: RawScores) -> do
                 let meanBenchmarkScore = Foldl.fold mean $ elems rawScores >>= ((fst <$>) <$> elems)
                     _ =
-                      sortOn phraseOrder
-                        $ ( \(phrase, meaningScores) ->
-                              ( phrase,
-                                sortOn meaningOrder
-                                  $ ( second
-                                        ( \(benchmarkScore, targetScore) ->
-                                            if targetScore == 0
-                                              then 0
-                                              else
-                                                if targetScore <= benchmarkScore
-                                                  then
-                                                    targetScore * meanBenchmarkScore / benchmarkScore
-                                                  else
-                                                    100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
-                                        )
+                      concatMap
+                        ( \(phrase, meaningScores) ->
+                            ( uncurry (phrase,,)
+                                <$> ( sortOn meaningOrder
+                                        $ ( second
+                                              ( \(benchmarkScore, targetScore) ->
+                                                  if targetScore == 0
+                                                    then 0
+                                                    else
+                                                      if targetScore <= benchmarkScore
+                                                        then
+                                                          targetScore * meanBenchmarkScore / benchmarkScore
+                                                        else
+                                                          100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
+                                              )
+                                          )
+                                        <$> Map.toList meaningScores
                                     )
-                                  <$> Map.toList meaningScores
-                              )
-                          )
-                        <$> Map.toList rawScores
+                            )
+                        )
+                        $ Map.toList rawScores
                 pure ()
               _ -> pure ()
             pure ()
@@ -184,10 +186,10 @@ main = do
       ensureNormalized
     _ -> pure ()
 
-phraseOrder :: (a, [(b, Double)]) -> (Down Double, Down Double, a)
-phraseOrder (phrase, meaningScores) =
-  let highestScore = snd $ Unsafe.head $ meaningScores
-   in (Down (highestScore - (snd $ Unsafe.last $ meaningScores)), Down highestScore, phrase)
+phraseOrder :: [(a, b, Double)] -> (Down Double, Down Double, a)
+phraseOrder bar =
+  let highestScore = (Unsafe.head $ bar) ^. _3
+   in (Down (highestScore - (Unsafe.last $ bar) ^. _3), Down highestScore, (Unsafe.head $ bar) ^. _1)
 
 meaningOrder :: (b, a) -> (Down a, b)
 meaningOrder (meaning, score) = (Down score, meaning)
