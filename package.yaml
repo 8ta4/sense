@@ -24,6 +24,7 @@ dependencies:
   - aeson
   - base16-bytestring
   - bytestring
+  - cassava
   - containers
   - cryptohash
   - directory

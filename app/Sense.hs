@@ -3,14 +3,16 @@ module Sense where
 import Control.Concurrent (threadDelay)
 import Control.Foldl (mean)
 import Control.Foldl qualified as Foldl
-import Control.Lens (to, (^..), (^?))
+import Control.Lens (to, (^.), (^..), (^?))
 import Control.Lens.Cons (_last)
 import Control.Lens.Prism (_Just)
+import Control.Lens.Tuple (_1, _3)
 import Data.Aeson (KeyValue ((.=)), ToJSON, Value, decode, decodeFileStrict, decodeStrictText, encode, object)
 import Data.Aeson.Key (fromText)
 import Data.Aeson.Lens (key, nth, values, _Array, _String)
 import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy.Char8 qualified as Char8
+import Data.Csv (EncodeOptions (encDelimiter), defaultEncodeOptions, encodeWith)
 import Data.List ((!!))
 import Data.Map qualified as Map
 import Data.Map.Lazy (elems, foldMapWithKey, fromListWith, insertWith, lookup, singleton, union)
@@ -22,7 +24,7 @@ import Options.Applicative.Builder (info)
 import Path (getStatePath, getWiktextractPath, meanFilename)
 import Relude
 import Relude.Unsafe qualified as Unsafe
-import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory)
+import System.Directory (doesFileExist, getFileSize, getHomeDirectory, getTemporaryDirectory, removeFile)
 import System.FilePath ((</>))
 import Text.URI (mkURI)
 
@@ -48,6 +50,7 @@ main = do
   apiKeyHeader <- loadApiKeyHeader
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   let rawPath = toString (targetTopic <> ".json")
+      normalizedPath = toString (targetTopic <> ".csv")
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
       let ensureSubmitted = unless batchExists $ do
@@ -155,39 +158,47 @@ main = do
             case maybeRawScores of
               Just (rawScores :: RawScores) -> do
                 let meanBenchmarkScore = Foldl.fold mean $ elems rawScores >>= ((fst <$>) <$> elems)
-                    _ =
-                      sortOn phraseOrder
-                        $ ( \(phrase, meaningScores) ->
-                              ( phrase,
-                                sortOn meaningOrder
-                                  $ ( second
-                                        ( \(benchmarkScore, targetScore) ->
-                                            if targetScore == 0
-                                              then 0
-                                              else
-                                                if targetScore <= benchmarkScore
-                                                  then
-                                                    targetScore * meanBenchmarkScore / benchmarkScore
-                                                  else
-                                                    100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
-                                        )
-                                    )
-                                  <$> Map.toList meaningScores
-                              )
-                          )
-                        <$> Map.toList rawScores
-                pure ()
+                writeFileLBS normalizedPath
+                  $ encodeWith tsvOptions
+                  $ join
+                  $ sortOn phraseOrder
+                  $ ( \(phrase, meaningScores) ->
+                        ( uncurry (phrase,,)
+                            <$> ( sortOn meaningOrder
+                                    $ ( second
+                                          ( \(benchmarkScore, targetScore) ->
+                                              if targetScore == 0
+                                                then 0
+                                                else
+                                                  if targetScore <= benchmarkScore
+                                                    then
+                                                      targetScore * meanBenchmarkScore / benchmarkScore
+                                                    else
+                                                      100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
+                                          )
+                                      )
+                                    <$> Map.toList meaningScores
+                                )
+                        )
+                    )
+                  <$> Map.toList rawScores
+                removeFile batchIdPath
               _ -> pure ()
-            pure ()
       ensureSubmitted
       ensureDownloaded
       ensureNormalized
     _ -> pure ()
 
-phraseOrder :: (a, [(b, Double)]) -> (Down Double, Down Double, a)
-phraseOrder (phrase, meaningScores) =
-  let highestScore = snd $ Unsafe.head $ meaningScores
-   in (Down (highestScore - (snd $ Unsafe.last $ meaningScores)), Down highestScore, phrase)
+tsvOptions :: EncodeOptions
+tsvOptions =
+  defaultEncodeOptions
+    { encDelimiter = fromIntegral (ord '\t')
+    }
+
+phraseOrder :: [(a, b, Double)] -> (Down Double, Down Double, a)
+phraseOrder rows =
+  let highestScore = (Unsafe.head $ rows) ^. _3
+   in (Down (highestScore - (Unsafe.last $ rows) ^. _3), Down highestScore, (Unsafe.head $ rows) ^. _1)
 
 meaningOrder :: (b, a) -> (Down a, b)
 meaningOrder (meaning, score) = (Down score, meaning)
