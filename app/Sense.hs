@@ -183,7 +183,6 @@ main = do
                   $ Map.toList rawScores
                 removeFile batchIdPath
               _ -> pure ()
-            pure ()
       ensureSubmitted
       ensureDownloaded
       ensureNormalized
