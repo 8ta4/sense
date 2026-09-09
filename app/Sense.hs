@@ -51,9 +51,10 @@ main = do
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   let rawPath = toString (targetTopic <> ".json")
       normalizedPath = toString (targetTopic <> ".csv")
+  rawExists <- doesFileExist rawPath
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
-      let ensureSubmitted = unless batchExists $ do
+      let ensureSubmitted = unless (rawExists || batchExists) $ do
             content <- readFileLBS wiktextractPath
             writeFileLBS inputPath
               $ Char8.unlines
