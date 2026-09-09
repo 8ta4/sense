@@ -71,6 +71,7 @@ executable download
     , base >=4.7 && <5
     , base16-bytestring
     , bytestring
+    , cassava
     , containers
     , cryptohash
     , directory
@@ -134,6 +135,7 @@ executable sense
     , base >=4.7 && <5
     , base16-bytestring
     , bytestring
+    , cassava
     , containers
     , cryptohash
     , directory
@@ -200,6 +202,7 @@ test-suite spec
     , base >=4.7 && <5
     , base16-bytestring
     , bytestring
+    , cassava
     , containers
     , cryptohash
     , directory

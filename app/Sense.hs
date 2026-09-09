@@ -12,6 +12,7 @@ import Data.Aeson.Key (fromText)
 import Data.Aeson.Lens (key, nth, values, _Array, _String)
 import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy.Char8 qualified as Char8
+import Data.Csv (EncodeOptions (encDelimiter), defaultEncodeOptions, encodeWith)
 import Data.List ((!!))
 import Data.Map qualified as Map
 import Data.Map.Lazy (elems, foldMapWithKey, fromListWith, insertWith, lookup, singleton, union)
@@ -49,6 +50,7 @@ main = do
   apiKeyHeader <- loadApiKeyHeader
   targetTopic <- execParser $ info (strArgument mempty <**> helper) mempty
   let rawPath = toString (targetTopic <> ".json")
+      normalizedPath = toString (targetTopic <> ".csv")
   case maybeMeanScores of
     Just (meanScores :: Map Text (Map Text Double)) -> do
       let ensureSubmitted = unless batchExists $ do
@@ -156,29 +158,29 @@ main = do
             case maybeRawScores of
               Just (rawScores :: RawScores) -> do
                 let meanBenchmarkScore = Foldl.fold mean $ elems rawScores >>= ((fst <$>) <$> elems)
-                    _ =
-                      concatMap
-                        ( \(phrase, meaningScores) ->
-                            ( uncurry (phrase,,)
-                                <$> ( sortOn meaningOrder
-                                        $ ( second
-                                              ( \(benchmarkScore, targetScore) ->
-                                                  if targetScore == 0
-                                                    then 0
+                writeFileLBS normalizedPath
+                  $ encodeWith tsvOptions
+                  $ concatMap
+                    ( \(phrase, meaningScores) ->
+                        ( uncurry (phrase,,)
+                            <$> ( sortOn meaningOrder
+                                    $ ( second
+                                          ( \(benchmarkScore, targetScore) ->
+                                              if targetScore == 0
+                                                then 0
+                                                else
+                                                  if targetScore <= benchmarkScore
+                                                    then
+                                                      targetScore * meanBenchmarkScore / benchmarkScore
                                                     else
-                                                      if targetScore <= benchmarkScore
-                                                        then
-                                                          targetScore * meanBenchmarkScore / benchmarkScore
-                                                        else
-                                                          100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
-                                              )
+                                                      100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
                                           )
-                                        <$> Map.toList meaningScores
-                                    )
-                            )
+                                      )
+                                    <$> Map.toList meaningScores
+                                )
                         )
-                        $ Map.toList rawScores
-                pure ()
+                    )
+                  $ Map.toList rawScores
               _ -> pure ()
             pure ()
       ensureSubmitted
@@ -186,10 +188,16 @@ main = do
       ensureNormalized
     _ -> pure ()
 
+tsvOptions :: EncodeOptions
+tsvOptions =
+  defaultEncodeOptions
+    { encDelimiter = fromIntegral (ord '\t')
+    }
+
 phraseOrder :: [(a, b, Double)] -> (Down Double, Down Double, a)
-phraseOrder bar =
-  let highestScore = (Unsafe.head $ bar) ^. _3
-   in (Down (highestScore - (Unsafe.last $ bar) ^. _3), Down highestScore, (Unsafe.head $ bar) ^. _1)
+phraseOrder rows =
+  let highestScore = (Unsafe.head $ rows) ^. _3
+   in (Down (highestScore - (Unsafe.last $ rows) ^. _3), Down highestScore, (Unsafe.head $ rows) ^. _1)
 
 meaningOrder :: (b, a) -> (Down a, b)
 meaningOrder (meaning, score) = (Down score, meaning)
