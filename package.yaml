@@ -28,6 +28,7 @@ dependencies:
   - cryptohash
   - directory
   - filepath
+  - foldl
   - lens
   - lens-aeson
   - modern-uri

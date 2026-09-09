@@ -75,6 +75,7 @@ executable download
     , cryptohash
     , directory
     , filepath
+    , foldl
     , lens
     , lens-aeson
     , modern-uri
@@ -137,6 +138,7 @@ executable sense
     , cryptohash
     , directory
     , filepath
+    , foldl
     , lens
     , lens-aeson
     , modern-uri
@@ -202,6 +204,7 @@ test-suite spec
     , cryptohash
     , directory
     , filepath
+    , foldl
     , lens
     , lens-aeson
     , modern-uri
