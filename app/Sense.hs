@@ -160,29 +160,31 @@ main = do
               Just (rawScores :: RawScores) -> do
                 let meanBenchmarkScore = Foldl.fold mean $ elems rawScores >>= ((fst <$>) <$> elems)
                 writeFileLBS normalizedPath
-                  $ encodeWith tsvOptions
-                  $ join
-                  $ sortOn phraseOrder
-                  $ ( \(phrase, meaningScores) ->
-                        ( uncurry (phrase,,)
-                            <$> ( sortOn meaningOrder
-                                    $ ( second
-                                          ( \(benchmarkScore, targetScore) ->
-                                              if targetScore == 0
-                                                then 0
-                                                else
-                                                  if targetScore <= benchmarkScore
-                                                    then
-                                                      targetScore * meanBenchmarkScore / benchmarkScore
-                                                    else
-                                                      100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
-                                          )
-                                      )
-                                    <$> Map.toList meaningScores
-                                )
-                        )
-                    )
-                  <$> Map.toList rawScores
+                  $ encodeWith tsvOptions [("phrase" :: Text, "meaning" :: Text, "connection" :: Text)]
+                  <> ( encodeWith tsvOptions
+                         $ join
+                         $ sortOn phraseOrder
+                         $ ( \(phrase, meaningScores) ->
+                               ( uncurry (phrase,,)
+                                   <$> ( sortOn meaningOrder
+                                           $ ( second
+                                                 ( \(benchmarkScore, targetScore) ->
+                                                     if targetScore == 0
+                                                       then 0
+                                                       else
+                                                         if targetScore <= benchmarkScore
+                                                           then
+                                                             targetScore * meanBenchmarkScore / benchmarkScore
+                                                           else
+                                                             100 - (100 - targetScore) * (100 - meanBenchmarkScore) / (100 - benchmarkScore)
+                                                 )
+                                             )
+                                           <$> Map.toList meaningScores
+                                       )
+                               )
+                           )
+                         <$> Map.toList rawScores
+                     )
                 removePathForcibly batchIdPath
               _ -> pure ()
       ensureSubmitted
